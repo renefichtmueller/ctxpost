@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="245" fill="url(#gradient-bg)" />
+
+  <!-- Calendar Base -->
+  <rect x="120" y="155" width="272" height="230" rx="24" fill="white" opacity="0.95"/>
+
+  <!-- Calendar Header -->
+  <rect x="120" y="155" width="272" height="65" rx="24" fill="url(#gradient-header)"/>
+  <rect x="120" y="190" width="272" height="30" fill="url(#gradient-header)"/>
+
+  <!-- Calendar Hooks -->
+  <rect x="185" y="135" width="16" height="45" rx="8" fill="white"/>
+  <rect x="311" y="135" width="16" height="45" rx="8" fill="white"/>
+
+  <!-- Calendar Grid Lines -->
+  <line x1="165" y1="270" x2="347" y2="270" stroke="#e2e8f0" stroke-width="2"/>
+  <line x1="165" y1="310" x2="347" y2="310" stroke="#e2e8f0" stroke-width="2"/>
+  <line x1="165" y1="350" x2="347" y2="350" stroke="#e2e8f0" stroke-width="2"/>
+
+  <!-- Calendar Dots (schedule markers) -->
+  <circle cx="190" cy="252" r="8" fill="#6366f1" opacity="0.7"/>
+  <circle cx="230" cy="252" r="8" fill="#8b5cf6" opacity="0.7"/>
+  <circle cx="310" cy="292" r="8" fill="#6366f1" opacity="0.7"/>
+  <circle cx="190" cy="332" r="8" fill="#a78bfa" opacity="0.5"/>
+  <circle cx="270" cy="332" r="8" fill="#8b5cf6" opacity="0.7"/>
+
+  <!-- Share/Connect Symbol (overlapping circles - social network) -->
+  <g transform="translate(310, 345)">
+    <circle cx="0" cy="0" r="38" fill="url(#gradient-share)" />
+    <!-- Share icon -->
+    <circle cx="-8" cy="-10" r="5" fill="white"/>
+    <circle cx="12" cy="-18" r="5" fill="white"/>
+    <circle cx="12" cy="2" r="5" fill="white"/>
+    <line x1="-4" y1="-12" x2="8" y2="-17" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+    <line x1="-4" y1="-8" x2="8" y2="0" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Clock Symbol (AI timing) -->
+  <g transform="translate(155, 155)">
+    <circle cx="0" cy="0" r="32" fill="url(#gradient-clock)" />
+    <circle cx="0" cy="0" r="22" fill="white"/>
+    <!-- Clock hands -->
+    <line x1="0" y1="0" x2="0" y2="-14" stroke="#6366f1" stroke-width="3" stroke-linecap="round"/>
+    <line x1="0" y1="0" x2="10" y2="4" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="0" cy="0" r="2.5" fill="#6366f1"/>
+  </g>
+
+  <!-- Sparkle (AI) -->
+  <g transform="translate(370, 140)">
+    <path d="M0,-18 L4,-4 L18,0 L4,4 L0,18 L-4,4 L-18,0 L-4,-4 Z" fill="#fbbf24" opacity="0.9"/>
+  </g>
+  <g transform="translate(398, 172)">
+    <path d="M0,-10 L2.5,-2.5 L10,0 L2.5,2.5 L0,10 L-2.5,2.5 L-10,0 L-2.5,-2.5 Z" fill="#fbbf24" opacity="0.7"/>
+  </g>
+
+  <defs>
+    <linearGradient id="gradient-bg" x1="0" y1="0" x2="512" y2="512">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="50%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#9333ea"/>
+    </linearGradient>
+    <linearGradient id="gradient-header" x1="120" y1="155" x2="392" y2="220">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="gradient-share" x1="-38" y1="-38" x2="38" y2="38">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="gradient-clock" x1="-32" y1="-32" x2="32" y2="32">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+</svg>

@@ -1,0 +1,21 @@
+# ML Training Dependencies for Social Scheduler
+# Install: pip install -r requirements.txt
+
+# Core ML
+torch>=2.1.0
+transformers>=4.40.0
+peft>=0.11.0
+trl>=0.8.0
+bitsandbytes>=0.43.0
+datasets>=2.19.0
+accelerate>=0.30.0
+
+# Unsloth for fast LoRA training (2-5x speedup)
+unsloth[colab-new]>=2024.4
+
+# Experiment tracking (optional)
+wandb>=0.17.0
+
+# Config & data processing
+pyyaml>=6.0
+psycopg2-binary>=2.9.9

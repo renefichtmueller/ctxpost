@@ -1,0 +1,393 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Authentication ──────────────────────────────────────
+
+model User {
+  id             String          @id @default(cuid())
+  name           String?
+  email          String          @unique
+  emailVerified  DateTime?
+  hashedPassword String
+  image          String?
+  timezone       String          @default("Europe/Berlin")
+  aiProvider       String          @default("ollama")   // "ollama" | "claude"
+  textModel        String          @default("qwen2.5:32b")
+  imageModel       String          @default("")
+  analysisModel    String          @default("qwen2.5:32b")
+  ollamaUrl        String          @default("http://192.168.178.169:11434")
+  imageGenUrl      String?         // Stable Diffusion / ComfyUI URL
+  imageGenProvider String          @default("sd-webui") // "sd-webui" | "comfyui"
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  posts           Post[]
+  socialAccounts  SocialAccount[]
+  aiInsights      AIInsight[]
+  brandStyleGuide BrandStyleGuide?
+  categories      ContentCategory[]
+  mediaAssets     MediaAsset[]
+  shortLinks      ShortLink[]
+  teamMembers     TeamMember[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Social Media Accounts ───────────────────────────────
+
+enum Platform {
+  FACEBOOK
+  LINKEDIN
+  TWITTER
+  INSTAGRAM
+  THREADS
+}
+
+model SocialAccount {
+  id             String    @id @default(cuid())
+  userId         String
+  platform       Platform
+  platformUserId String
+  accountName    String
+  accountType    String    // "page" | "profile" | "business"
+  accessToken    String    @db.Text
+  refreshToken   String?   @db.Text
+  tokenExpiresAt DateTime?
+  avatarUrl      String?
+  followerCount  Int?
+  followingCount Int?
+  postsCount     Int?
+  parentAccountId String?  // For Facebook Pages: links to the profile SocialAccount
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postTargets PostTarget[]
+
+  @@unique([userId, platform, platformUserId])
+  @@index([userId])
+}
+
+// ─── Posts ────────────────────────────────────────────────
+
+enum PostStatus {
+  DRAFT
+  PENDING_REVIEW
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+enum ContentType {
+  TEXT
+  LINK
+  IMAGE
+  VIDEO
+}
+
+model Post {
+  id               String      @id @default(cuid())
+  userId           String
+  content          String      @db.Text
+  contentType      ContentType @default(TEXT)
+  imageUrl         String?
+  imageDescription String?     @db.Text
+  mediaUrls        String[]    @default([])
+  scheduledAt      DateTime?
+  publishedAt      DateTime?
+  status           PostStatus  @default(DRAFT)
+  errorMsg         String?     @db.Text
+  categoryId       String?
+  isEvergreen      Boolean     @default(false)
+  approvalNote     String?     @db.Text   // Reviewer's note
+  approvedBy       String?                // User ID of the approver
+  approvedAt       DateTime?
+  firstComment     String?     @db.Text   // Auto-posted as first comment after publishing
+  lastRecycledAt   DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   ContentCategory?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  targets    PostTarget[]
+  analytics  PostAnalytics[]
+  variations ContentVariation[]
+
+  @@index([userId, status])
+  @@index([status, scheduledAt])
+}
+
+model PostTarget {
+  id              String     @id @default(cuid())
+  postId          String
+  socialAccountId String
+  platformPostId  String?
+  status          PostStatus @default(DRAFT)
+  errorMsg        String?    @db.Text
+  publishedAt     DateTime?
+
+  post          Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  socialAccount SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, socialAccountId])
+  @@index([postId])
+}
+
+// ─── Content Categories ─────────────────────────────────
+
+model ContentCategory {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  color       String   @default("#6366f1") // hex color for UI
+  icon        String?  // optional emoji or icon name
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posts Post[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+// ─── Content Library ────────────────────────────────────
+
+model MediaAsset {
+  id          String   @id @default(cuid())
+  userId      String
+  filename    String
+  url         String
+  mimeType    String
+  fileSize    Int      // in bytes
+  width       Int?
+  height      Int?
+  tags        String[] @default([])
+  altText     String?
+  description String?
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, createdAt])
+}
+
+// ─── Analytics ───────────────────────────────────────────
+
+model PostAnalytics {
+  id             String   @id @default(cuid())
+  postId         String
+  platform       Platform
+  likes          Int      @default(0)
+  comments       Int      @default(0)
+  shares         Int      @default(0)
+  impressions    Int      @default(0)
+  clicks         Int      @default(0)
+  engagementRate Float?
+  fetchedAt      DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, platform])
+  @@index([platform, fetchedAt])
+}
+
+// ─── AI Insights (persistent) ───────────────────────────
+
+enum AIInsightType {
+  BEST_TIMES
+  CONTENT_SUGGESTIONS
+  HASHTAG_GENERATION
+  CONTENT_VARIATION
+  IMAGE_GENERATION
+  TEXT_GENERATION
+}
+
+model AIInsight {
+  id              String        @id @default(cuid())
+  userId          String
+  type            AIInsightType
+  data            Json
+  inputData       Json?
+  durationMs      Int?
+  modelUsed       String?
+  confidenceLevel String?
+  createdAt       DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([userId, createdAt])
+}
+
+// ─── Brand Style Guide ──────────────────────────────────
+
+model BrandStyleGuide {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  name               String   @default("Standard")
+  tone               String   @default("professional")    // professional, casual, humorous, inspiring
+  formality          String   @default("formal")           // formal, semi-formal, informal
+  emojiUsage         String   @default("moderate")         // none, minimal, moderate, heavy
+  targetAudience     String?  @db.Text
+  brandVoice         String?  @db.Text
+  avoidTopics        String?  @db.Text
+  preferredTopics    String?  @db.Text
+  samplePosts        Json?
+  hashtagStrategy    String   @default("moderate")         // none, minimal, moderate, aggressive
+  preferredHashtags  String?  @db.Text
+  languages          String   @default("de")
+  customInstructions String?  @db.Text
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── AI Feedback (for training pipeline) ────────────────
+
+enum FeedbackRating {
+  GOOD
+  BAD
+  EDITED
+}
+
+model AIFeedback {
+  id              String         @id @default(cuid())
+  userId          String
+  insightType     AIInsightType
+  rating          FeedbackRating
+  originalOutput  String         @db.Text
+  editedOutput    String?        @db.Text  // If user edited the output
+  modelUsed       String?
+  inputContext     Json?          // The input that generated this output
+  createdAt       DateTime       @default(now())
+
+  @@index([userId, insightType])
+  @@index([rating])
+}
+
+// ─── Content Variations ─────────────────────────────────
+
+model ContentVariation {
+  id          String   @id @default(cuid())
+  postId      String
+  variant     String   @default("A")                      // A, B, C
+  content     String   @db.Text
+  hashtags    String?  @db.Text
+  generatedBy String?                                     // model name that generated this
+  isSelected  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+// ─── Link Shortening & UTM ─────────────────────────────
+
+model ShortLink {
+  id          String   @id @default(cuid())
+  userId      String
+  originalUrl String   @db.Text
+  shortCode   String   @unique
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmTerm     String?
+  utmContent  String?
+  clicks      Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([shortCode])
+}
+
+// ─── Teams ───────────────────────────────────────────────
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+model Team {
+  id        String       @id @default(cuid())
+  name      String
+  slug      String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  members   TeamMember[]
+
+  @@index([slug])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  role      TeamRole @default(VIEWER)
+  invitedBy String?
+  joinedAt  DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([userId])
+  @@index([teamId])
+}

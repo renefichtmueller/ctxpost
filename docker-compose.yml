@@ -1,0 +1,90 @@
+version: "3.8"
+
+services:
+  # ─── PostgreSQL Datenbank ─────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: social-scheduler-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-scheduler}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-social_scheduler}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-scheduler}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Social Scheduler App ─────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: social-scheduler-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env.server
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-scheduler}:${POSTGRES_PASSWORD:-changeme_secure_password}@db:5432/${POSTGRES_DB:-social_scheduler}
+      DIRECT_URL: postgresql://${POSTGRES_USER:-scheduler}:${POSTGRES_PASSWORD:-changeme_secure_password}@db:5432/${POSTGRES_DB:-social_scheduler}
+      AUTH_TRUST_HOST: "true"
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
+      TWITTER_CLIENT_ID: ${TWITTER_CLIENT_ID:-}
+      TWITTER_CLIENT_SECRET: ${TWITTER_CLIENT_SECRET:-}
+      THREADS_APP_ID: ${THREADS_APP_ID:-}
+      THREADS_APP_SECRET: ${THREADS_APP_SECRET:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ─── Nginx Reverse Proxy ──────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: social-scheduler-nginx
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+
+  # ─── Cron Service (ruft den Publishing-Endpoint auf) ──────
+  cron:
+    image: alpine:latest
+    container_name: social-scheduler-cron
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    env_file:
+      - .env.server
+    entrypoint: /bin/sh
+    command: >
+      -c "
+      touch /var/log/cron.log &&
+      (echo '* * * * * wget -q -O - --header=\"Authorization: Bearer '\"$$CRON_SECRET\"'\" http://app:3000/api/cron/publish-posts >> /var/log/cron.log 2>&1';
+       echo '0 */6 * * * wget -q -O - --header=\"Authorization: Bearer '\"$$CRON_SECRET\"'\" http://app:3000/api/cron/fetch-analytics >> /var/log/cron.log 2>&1') | crontab - &&
+      crond -l 2 &&
+      tail -f /var/log/cron.log
+      "
+
+volumes:
+  postgres_data:
+    driver: local
