@@ -1,18 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <circle cx="16" cy="16" r="15" fill="url(#g)"/>
-  <rect x="8" y="10" width="16" height="14" rx="2.5" fill="white" opacity="0.95"/>
-  <rect x="8" y="10" width="16" height="5" rx="2.5" fill="#4f46e5"/>
-  <rect x="8" y="13" width="16" height="2" fill="#4f46e5"/>
-  <rect x="12" y="8.5" width="1.5" height="4" rx="0.75" fill="white"/>
-  <rect x="18.5" y="8.5" width="1.5" height="4" rx="0.75" fill="white"/>
-  <circle cx="12" cy="19" r="1.2" fill="#6366f1"/>
-  <circle cx="16" cy="19" r="1.2" fill="#8b5cf6"/>
-  <circle cx="20" cy="22" r="1.2" fill="#6366f1"/>
-  <path d="M24,8 L25,11 L28,12 L25,13 L24,16 L23,13 L20,12 L23,11 Z" fill="#fbbf24" opacity="0.85"/>
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="32" y2="32">
-      <stop offset="0%" stop-color="#6366f1"/>
-      <stop offset="100%" stop-color="#9333ea"/>
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- "C" shape - left arc -->
+  <path
+    d="M 280 136
+       A 130 130 0 1 0 280 376"
+    stroke="currentColor" stroke-width="56" stroke-linecap="round" fill="none"/>
+
+  <!-- "X" shape - two crossing lines, offset to the right -->
+  <line x1="260" y1="170" x2="400" y2="342" stroke="currentColor" stroke-width="52" stroke-linecap="round"/>
+  <line x1="400" y1="170" x2="260" y2="342" stroke="currentColor" stroke-width="52" stroke-linecap="round"/>
 </svg>

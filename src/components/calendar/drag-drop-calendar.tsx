@@ -21,6 +21,8 @@ import {
   isSameMonth,
   isSameDay,
   isToday,
+  isBefore,
+  startOfDay,
   addMonths,
   subMonths,
   setHours,
@@ -235,6 +237,7 @@ export function DragDropCalendar({ posts: initialPosts, locale = "en" }: DragDro
               const dayPosts = getPostsForDay(day);
               const inCurrentMonth = isSameMonth(day, currentMonth);
               const today = isToday(day);
+              const past = !today && isBefore(day, startOfDay(new Date()));
               const dayId = format(day, "yyyy-MM-dd");
               const isOver = overDayId === dayId;
 
@@ -244,6 +247,7 @@ export function DragDropCalendar({ posts: initialPosts, locale = "en" }: DragDro
                   dayId={dayId}
                   inCurrentMonth={inCurrentMonth}
                   isToday={today}
+                  isPast={past}
                   isOver={isOver}
                   isDragging={activePost !== null}
                 >
@@ -282,7 +286,7 @@ export function DragDropCalendar({ posts: initialPosts, locale = "en" }: DragDro
                   POST_STATUS_COLORS[activePost.status as PostStatus]
                 }`}
               >
-                <GripVertical className="h-3 w-3 shrink-0 opacity-50" />
+                <GripVertical className="h-3 w-3 shrink-0 opacity-75" />
                 <span className="truncate">{activePost.content.substring(0, 30)}</span>
               </div>
             ) : null}

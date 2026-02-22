@@ -12,15 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { ImageIcon, Loader2, Sparkles, X, RefreshCw } from "lucide-react";
-import Image from "next/image";
 
 import { Badge } from "@/components/ui/badge";
 import { Info } from "lucide-react";
@@ -35,23 +27,25 @@ interface ImageGeneratorProps {
 }
 
 const IMAGE_SIZES = [
-  { value: "1200x630", w: 1200, h: 630, platform: "FACEBOOK" },
-  { value: "1200x627", w: 1200, h: 627, platform: "LINKEDIN" },
-  { value: "1600x900", w: 1600, h: 900, platform: "TWITTER" },
-  { value: "1080x1080", w: 1080, h: 1080, platform: "INSTAGRAM" },
-  { value: "1080x1920", w: 1080, h: 1920, platform: null },
-  { value: "1024x1024", w: 1024, h: 1024, platform: null },
-  { value: "512x512", w: 512, h: 512, platform: null },
+  { value: "512x512", w: 512, h: 512, platform: null, fast: true },
+  { value: "768x768", w: 768, h: 768, platform: null, fast: true },
+  { value: "1024x1024", w: 1024, h: 1024, platform: null, fast: false },
+  { value: "1200x630", w: 1200, h: 630, platform: "FACEBOOK", fast: false },
+  { value: "1200x627", w: 1200, h: 627, platform: "LINKEDIN", fast: false },
+  { value: "1600x900", w: 1600, h: 900, platform: "TWITTER", fast: false },
+  { value: "1080x1080", w: 1080, h: 1080, platform: "INSTAGRAM", fast: false },
+  { value: "1080x1920", w: 1080, h: 1920, platform: null, fast: false },
 ];
 
 const IMAGE_SIZE_KEYS: Record<string, string> = {
+  "512x512": "small",
+  "768x768": "medium",
+  "1024x1024": "square",
   "1200x630": "facebookOptimal",
   "1200x627": "linkedinOptimal",
   "1600x900": "twitterOptimal",
   "1080x1080": "instagramOptimal",
   "1080x1920": "storyReels",
-  "1024x1024": "square",
-  "512x512": "small",
 };
 
 const PLATFORM_IMAGE_INFO: Record<string, { ratio: string }> = {
@@ -83,15 +77,18 @@ export function ImageGenerator({
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
 
-  // Auto-select optimal size based on first selected platform
+  // Auto-select optimal size based on first selected platform, default to fast 512x512
   const defaultSize = (() => {
     for (const p of platforms) {
       const match = IMAGE_SIZES.find((s) => s.platform === p);
       if (match) return match.value;
     }
-    return "1024x1024";
+    return "512x512";
   })();
   const [selectedSize, setSelectedSize] = useState(defaultSize);
+
+  const selectedSizeInfo = IMAGE_SIZES.find((s) => s.value === selectedSize);
+  const isSlowSize = selectedSizeInfo && !selectedSizeInfo.fast;
 
   const handleAutoDescribe = () => {
     // Generate a simple image description from the post content
@@ -179,17 +176,13 @@ export function ImageGenerator({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ImageIcon className="h-5 w-5" />
-          {t("title")}
-        </CardTitle>
-        <CardDescription>
-          {t("description")}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-1">
+        <ImageIcon className="h-4 w-4" style={{ color: "#a855f7" }} />
+        <span className="font-semibold text-sm text-white">{t("title")}</span>
+        <span className="text-xs" style={{ color: "#94a3b8" }}>— {t("description")}</span>
+      </div>
+      <div className="space-y-4">
         {/* Image Description */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -296,6 +289,36 @@ export function ImageGenerator({
           </div>
         )}
 
+        {/* Speed hint for large resolutions */}
+        {isSlowSize && !isGenerating && !imageUrl && (
+          <div className="flex items-start gap-2 text-xs rounded-lg px-3 py-2"
+            style={{ background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.2)", color: "#ca8a04" }}>
+            <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "#eab308" }} />
+            <span>
+              <span className="font-medium" style={{ color: "#eab308" }}>Hinweis:</span>{" "}
+              Große Auflösungen dauern 1-5 Min. Für schnelle Vorschauen{" "}
+              <button
+                type="button"
+                className="underline font-medium"
+                style={{ color: "#a855f7" }}
+                onClick={() => setSelectedSize("512x512")}
+              >
+                512×512
+              </button>{" "}
+              oder{" "}
+              <button
+                type="button"
+                className="underline font-medium"
+                style={{ color: "#a855f7" }}
+                onClick={() => setSelectedSize("768x768")}
+              >
+                768×768
+              </button>{" "}
+              wählen (~10-30 Sek).
+            </span>
+          </div>
+        )}
+
         {/* Progress */}
         {progress && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
@@ -304,25 +327,37 @@ export function ImageGenerator({
           </div>
         )}
 
-        {/* Error */}
+        {/* Error — with helpful link for missing URL config */}
         {error && (
-          <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
-            {error}
+          <div className="text-sm px-3 py-2.5 rounded-xl space-y-1.5"
+            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
+            <p>{error}</p>
+            {(error.includes("No image generation URL") || error.includes("noImageGenUrl") || error.toLowerCase().includes("url configured")) && (
+              <p className="text-xs" style={{ color: "#94a3b8" }}>
+                Bitte konfiguriere eine Stable Diffusion oder ComfyUI URL in den{" "}
+                <a
+                  href="/ai-models"
+                  className="underline font-medium"
+                  style={{ color: "#a855f7" }}
+                >
+                  AI Models Einstellungen → Bildgenerierung
+                </a>
+                . Standard-URL für SD WebUI: <code className="text-xs px-1 rounded" style={{ background: "rgba(255,255,255,0.08)" }}>http://192.168.178.195:7860</code>
+              </p>
+            )}
           </div>
         )}
 
         {/* Generated Image Preview */}
         {imageUrl && (
           <div className="relative group">
-            <div className="relative w-full aspect-video rounded-lg overflow-hidden border bg-muted">
-              <Image
-                src={imageUrl}
-                alt={t("generatedImage")}
-                fill
-                className="object-contain"
-                unoptimized
-              />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imageUrl}
+              alt={t("generatedImage")}
+              className="w-full rounded-lg border object-contain"
+              style={{ maxHeight: "400px", background: "rgba(0,0,0,0.3)" }}
+            />
             <Button
               type="button"
               variant="destructive"
@@ -335,7 +370,7 @@ export function ImageGenerator({
             <input type="hidden" name="imageUrl" value={imageUrl} />
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

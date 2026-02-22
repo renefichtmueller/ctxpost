@@ -8,9 +8,16 @@ import { ArrowLeft } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { getCategories } from "@/actions/categories";
 
-export default async function NewPostPage() {
+export default async function NewPostPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ prefill?: string; content?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+
+  const params = await searchParams;
+  const initialContent = params.prefill || params.content || "";
 
   const t = await getTranslations("posts");
   const tCommon = await getTranslations("common");
@@ -49,7 +56,7 @@ export default async function NewPostPage() {
         </div>
       </div>
 
-      <PostForm socialAccounts={socialAccounts} categories={categories} />
+      <PostForm socialAccounts={socialAccounts} categories={categories} initialContent={initialContent} />
     </div>
   );
 }

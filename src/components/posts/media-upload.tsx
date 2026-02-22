@@ -3,14 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Upload, X, FileImage, FileText, Film, FileSpreadsheet } from "lucide-react";
+import { Upload, X, FileText, Film } from "lucide-react";
 import Image from "next/image";
 
 interface MediaUploadProps {
@@ -186,75 +179,60 @@ export function MediaUpload({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="h-5 w-5" />
-          {t("title")}
-        </CardTitle>
-        <CardDescription>
-          {t("description", { maxFiles: MAX_FILES })}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Drop zone */}
-        {mediaUrls.length < MAX_FILES && (
-          <div
-            onClick={handleClick}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`
-              relative flex flex-col items-center justify-center gap-2
-              rounded-lg border-2 border-dashed p-6 cursor-pointer
-              transition-colors
-              ${
-                isDragOver
-                  ? "border-primary bg-primary/5"
-                  : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
-              }
-              ${isUploading ? "pointer-events-none opacity-60" : ""}
-            `}
-          >
-            <Upload
-              className={`h-8 w-8 ${isDragOver ? "text-primary" : "text-muted-foreground"}`}
-            />
-            <div className="text-center">
-              <p className="text-sm font-medium">
-                {isUploading
-                  ? t("uploading")
-                  : t("dropHere")}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t("fileTypes")}
-              </p>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.mp4,.mov,.docx,.pptx"
-              onChange={handleInputChange}
-              className="hidden"
-            />
-          </div>
-        )}
+    <div className="space-y-3">
+      <div className="flex items-center gap-2 mb-1">
+        <Upload className="h-4 w-4" style={{ color: "#22d3ee" }} />
+        <span className="font-semibold text-sm text-white">{t("title")}</span>
+        <span className="text-xs" style={{ color: "#94a3b8" }}>— {t("description", { maxFiles: MAX_FILES })}</span>
+      </div>
 
-        {/* Error */}
-        {error && (
-          <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">
-            {error}
+      {/* Drop zone */}
+      {mediaUrls.length < MAX_FILES && (
+        <div
+          onClick={handleClick}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          className={`relative flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 cursor-pointer transition-all ${isUploading ? "pointer-events-none opacity-60" : ""}`}
+          style={{
+            borderColor: isDragOver ? "#22d3ee" : "rgba(34,211,238,0.2)",
+            background: isDragOver ? "rgba(34,211,238,0.06)" : "rgba(255,255,255,0.02)",
+          }}
+        >
+          <Upload className="h-7 w-7" style={{ color: isDragOver ? "#22d3ee" : "#475569" }} />
+          <div className="text-center">
+            <p className="text-sm font-medium text-white">
+              {isUploading ? t("uploading") : t("dropHere")}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{t("fileTypes")}</p>
           </div>
-        )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.mp4,.mov,.docx,.pptx"
+            onChange={handleInputChange}
+            className="hidden"
+          />
+        </div>
+      )}
 
-        {/* Previews */}
-        {mediaUrls.length > 0 && (
-          <div className="grid grid-cols-2 gap-3">
-            {mediaUrls.map((url, index) => (
-              <div
-                key={url}
-                className="relative group rounded-lg border bg-muted overflow-hidden"
-              >
+      {/* Error */}
+      {error && (
+        <div className="text-sm px-3 py-2 rounded-xl" style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}>
+          {error}
+        </div>
+      )}
+
+      {/* Previews */}
+      {mediaUrls.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {mediaUrls.map((url, index) => (
+            <div
+              key={url}
+              className="relative group rounded-xl overflow-hidden"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(34,211,238,0.15)" }}
+            >
                 {isImageUrl(url) ? (
                   <div className="relative aspect-video">
                     <Image
@@ -293,7 +271,6 @@ export function MediaUpload({
             ))}
           </div>
         )}
-      </CardContent>
-    </Card>
+    </div>
   );
 }

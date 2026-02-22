@@ -1,4 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { decrypt } from "@/lib/crypto";
+
+/** Safely decrypt a value, returning it as-is if ENCRYPTION_KEY is not set */
+function safeDecrypt(value: string | null | undefined): string {
+  if (!value) return "";
+  if (!process.env.ENCRYPTION_KEY) return value;
+  try { return decrypt(value); } catch { return value; }
+}
 
 type PlatformCredentials = {
   appId: string;
@@ -32,26 +40,26 @@ export async function getCredentialsForPlatform(
   switch (platform) {
     case "facebook":
       return {
-        appId: config?.facebookAppId || process.env.FACEBOOK_APP_ID || "",
-        appSecret: config?.facebookAppSecret || process.env.FACEBOOK_APP_SECRET || "",
+        appId: safeDecrypt(config?.facebookAppId) || process.env.FACEBOOK_APP_ID || "",
+        appSecret: safeDecrypt(config?.facebookAppSecret) || process.env.FACEBOOK_APP_SECRET || "",
         redirectUri: process.env.FACEBOOK_REDIRECT_URI || `${baseUrl}/api/social/facebook/callback`,
       };
     case "linkedin":
       return {
-        appId: config?.linkedinClientId || process.env.LINKEDIN_CLIENT_ID || "",
-        appSecret: config?.linkedinClientSecret || process.env.LINKEDIN_CLIENT_SECRET || "",
+        appId: safeDecrypt(config?.linkedinClientId) || process.env.LINKEDIN_CLIENT_ID || "",
+        appSecret: safeDecrypt(config?.linkedinClientSecret) || process.env.LINKEDIN_CLIENT_SECRET || "",
         redirectUri: process.env.LINKEDIN_REDIRECT_URI || `${baseUrl}/api/social/linkedin/callback`,
       };
     case "twitter":
       return {
-        appId: config?.twitterClientId || process.env.TWITTER_CLIENT_ID || "",
-        appSecret: config?.twitterClientSecret || process.env.TWITTER_CLIENT_SECRET || "",
+        appId: safeDecrypt(config?.twitterClientId) || process.env.TWITTER_CLIENT_ID || "",
+        appSecret: safeDecrypt(config?.twitterClientSecret) || process.env.TWITTER_CLIENT_SECRET || "",
         redirectUri: process.env.TWITTER_REDIRECT_URI || `${baseUrl}/api/social/twitter/callback`,
       };
     case "threads":
       return {
-        appId: config?.threadsAppId || process.env.THREADS_APP_ID || "",
-        appSecret: config?.threadsAppSecret || process.env.THREADS_APP_SECRET || "",
+        appId: safeDecrypt(config?.threadsAppId) || process.env.THREADS_APP_ID || "",
+        appSecret: safeDecrypt(config?.threadsAppSecret) || process.env.THREADS_APP_SECRET || "",
         redirectUri: process.env.THREADS_REDIRECT_URI || `${baseUrl}/api/social/threads/callback`,
       };
   }
@@ -89,6 +97,6 @@ export async function getAnthropicCredentials(
   }
 
   return {
-    apiKey: config?.anthropicApiKey || process.env.ANTHROPIC_API_KEY || "",
+    apiKey: safeDecrypt(config?.anthropicApiKey) || process.env.ANTHROPIC_API_KEY || "",
   };
 }

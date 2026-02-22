@@ -6,7 +6,7 @@ type LinkedInCredentials = {
   redirectUri: string;
 };
 
-export function getLinkedInAuthUrl(creds?: LinkedInCredentials): string {
+export function getLinkedInAuthUrl(creds?: LinkedInCredentials): { url: string; state: string } {
   const clientId = creds?.appId || process.env.LINKEDIN_CLIENT_ID!;
   const redirectUri = creds?.redirectUri || process.env.LINKEDIN_REDIRECT_URI!;
 
@@ -17,14 +17,15 @@ export function getLinkedInAuthUrl(creds?: LinkedInCredentials): string {
     scope += " r_organization_social w_organization_social";
   }
 
+  const state = crypto.randomUUID();
   const params = new URLSearchParams({
     response_type: "code",
     client_id: clientId,
     redirect_uri: redirectUri,
     scope,
-    state: crypto.randomUUID(),
+    state,
   });
-  return `https://www.linkedin.com/oauth/v2/authorization?${params}`;
+  return { url: `https://www.linkedin.com/oauth/v2/authorization?${params}`, state };
 }
 
 export async function exchangeLinkedInCode(code: string, creds?: LinkedInCredentials) {

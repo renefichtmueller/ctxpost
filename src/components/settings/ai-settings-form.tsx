@@ -261,7 +261,7 @@ export function AISettingsForm({
                   id="ollamaUrl"
                   value={ollamaUrl}
                   onChange={(e) => setOllamaUrl(e.target.value)}
-                  placeholder="http://192.168.178.169:11434"
+                  placeholder="http://localhost:11434"
                 />
                 <Button
                   type="button"

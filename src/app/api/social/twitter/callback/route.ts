@@ -4,6 +4,12 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { exchangeTwitterCode } from "@/lib/social/twitter";
 import { getCredentialsForPlatform } from "@/lib/api-credentials";
+import { encrypt } from "@/lib/crypto";
+
+function encryptToken(token: string): string {
+  if (!process.env.ENCRYPTION_KEY) return token;
+  try { return encrypt(token); } catch { return token; }
+}
 
 function getBaseUrl(): string {
   return process.env.NEXTAUTH_URL || process.env.AUTH_URL || "http://localhost:3000";
@@ -40,7 +46,7 @@ export async function GET(request: NextRequest) {
 
   // Validate state parameter to prevent CSRF attacks
   if (!state || state !== storedState) {
-    console.error("[Twitter OAuth] State mismatch:", { received: state, expected: storedState });
+    console.error("[Twitter OAuth] State mismatch detected");
     return NextResponse.redirect(
       new URL("/accounts?error=twitter_state_mismatch", baseUrl)
     );
@@ -59,8 +65,8 @@ export async function GET(request: NextRequest) {
         },
       },
       update: {
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
+        accessToken: encryptToken(data.accessToken),
+        refreshToken: data.refreshToken ? encryptToken(data.refreshToken) : null,
         accountName: `${data.name} (@${data.username})`,
         avatarUrl: data.profileImageUrl,
         tokenExpiresAt: new Date(Date.now() + data.expiresIn * 1000),
@@ -72,8 +78,8 @@ export async function GET(request: NextRequest) {
         platformUserId: data.userId,
         accountName: `${data.name} (@${data.username})`,
         accountType: "profile",
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
+        accessToken: encryptToken(data.accessToken),
+        refreshToken: data.refreshToken ? encryptToken(data.refreshToken) : null,
         avatarUrl: data.profileImageUrl,
         tokenExpiresAt: new Date(Date.now() + data.expiresIn * 1000),
       },

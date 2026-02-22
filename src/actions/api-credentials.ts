@@ -4,11 +4,24 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
+import { encrypt, decrypt } from "@/lib/crypto";
 
 function maskSecret(value: string | null | undefined): string {
   if (!value) return "";
-  if (value.length <= 6) return "●".repeat(value.length);
-  return "●".repeat(value.length - 4) + value.slice(-4);
+  // Decrypt first if encrypted, then mask
+  let plain = value;
+  if (process.env.ENCRYPTION_KEY) {
+    try { plain = decrypt(value); } catch { /* use raw */ }
+  }
+  if (plain.length <= 6) return "●".repeat(plain.length);
+  return "●".repeat(plain.length - 4) + plain.slice(-4);
+}
+
+/** Encrypt a secret if ENCRYPTION_KEY is configured */
+function encryptIfConfigured(value: string | null): string | null {
+  if (!value) return null;
+  if (!process.env.ENCRYPTION_KEY) return value;
+  try { return encrypt(value); } catch { return value; }
 }
 
 export async function getApiCredentials() {
@@ -59,9 +72,8 @@ export async function updateApiCredentials(formData: FormData) {
         const appId = formData.get("facebookAppId") as string;
         const appSecret = formData.get("facebookAppSecret") as string;
         if (appId !== undefined) data.facebookAppId = appId || null;
-        // Only update secret if a new value was provided (not the masked placeholder)
         if (appSecret && !appSecret.startsWith("●")) {
-          data.facebookAppSecret = appSecret || null;
+          data.facebookAppSecret = encryptIfConfigured(appSecret || null);
         }
         break;
       }
@@ -70,7 +82,7 @@ export async function updateApiCredentials(formData: FormData) {
         const clientSecret = formData.get("linkedinClientSecret") as string;
         if (clientId !== undefined) data.linkedinClientId = clientId || null;
         if (clientSecret && !clientSecret.startsWith("●")) {
-          data.linkedinClientSecret = clientSecret || null;
+          data.linkedinClientSecret = encryptIfConfigured(clientSecret || null);
         }
         break;
       }
@@ -79,7 +91,7 @@ export async function updateApiCredentials(formData: FormData) {
         const clientSecret = formData.get("twitterClientSecret") as string;
         if (clientId !== undefined) data.twitterClientId = clientId || null;
         if (clientSecret && !clientSecret.startsWith("●")) {
-          data.twitterClientSecret = clientSecret || null;
+          data.twitterClientSecret = encryptIfConfigured(clientSecret || null);
         }
         break;
       }
@@ -88,14 +100,14 @@ export async function updateApiCredentials(formData: FormData) {
         const appSecret = formData.get("threadsAppSecret") as string;
         if (appId !== undefined) data.threadsAppId = appId || null;
         if (appSecret && !appSecret.startsWith("●")) {
-          data.threadsAppSecret = appSecret || null;
+          data.threadsAppSecret = encryptIfConfigured(appSecret || null);
         }
         break;
       }
       case "anthropic": {
         const apiKey = formData.get("anthropicApiKey") as string;
         if (apiKey && !apiKey.startsWith("●")) {
-          data.anthropicApiKey = apiKey || null;
+          data.anthropicApiKey = encryptIfConfigured(apiKey || null);
         }
         break;
       }

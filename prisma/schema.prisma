@@ -22,11 +22,16 @@ model User {
   textModel        String          @default("qwen2.5:32b")
   imageModel       String          @default("")
   analysisModel    String          @default("qwen2.5:32b")
-  ollamaUrl        String          @default("http://192.168.178.169:11434")
+  ollamaUrl        String          @default("http://localhost:11434")
   imageGenUrl      String?         // Stable Diffusion / ComfyUI URL
   imageGenProvider String          @default("sd-webui") // "sd-webui" | "comfyui"
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
+  privacyConsentAt DateTime?         // DSGVO Art. 7 – timestamp of privacy consent
+  termsConsentAt   DateTime?         // timestamp of terms acceptance
+  consentVersion   String?           // version string of accepted privacy policy
+  deletionRequestedAt DateTime?      // DSGVO Art. 17 – account deletion requested
 
   accounts        Account[]
   sessions        Session[]
@@ -39,6 +44,8 @@ model User {
   mediaAssets     MediaAsset[]
   shortLinks      ShortLink[]
   teamMembers     TeamMember[]
+  consentLogs     ConsentLog[]
+  auditLogs       AuditLog[]
 }
 
 model Account {
@@ -75,6 +82,64 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// ─── GDPR / DSGVO Compliance ────────────────────────────
+
+enum ConsentType {
+  PRIVACY_POLICY
+  TERMS_OF_SERVICE
+  MARKETING
+  COOKIE_ANALYTICS
+}
+
+enum ConsentAction {
+  GRANTED
+  WITHDRAWN
+}
+
+model ConsentLog {
+  id          String        @id @default(cuid())
+  userId      String
+  type        ConsentType
+  action      ConsentAction
+  version     String        // privacy policy version at time of consent
+  ipAddress   String?       // IP at time of consent (for proof)
+  userAgent   String?       @db.Text
+  createdAt   DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([createdAt])
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  REGISTER
+  DATA_EXPORT
+  ACCOUNT_DELETE
+  CONSENT_CHANGE
+  PASSWORD_CHANGE
+  SOCIAL_CONNECT
+  SOCIAL_DISCONNECT
+  SETTINGS_CHANGE
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  userId      String
+  action      AuditAction
+  details     String?     @db.Text  // JSON with action-specific details
+  ipAddress   String?
+  userAgent   String?     @db.Text
+  createdAt   DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, action])
+  @@index([createdAt])
 }
 
 // ─── Social Media Accounts ───────────────────────────────
@@ -384,6 +449,7 @@ enum TeamRole {
   OWNER
   ADMIN
   EDITOR
+  REVIEWER
   VIEWER
 }
 

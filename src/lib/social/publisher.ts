@@ -4,6 +4,13 @@ import { publishToLinkedIn, postLinkedInComment } from "./linkedin";
 import { publishToTwitter, refreshTwitterToken } from "./twitter";
 import { publishToInstagram, validateInstagramToken } from "./instagram";
 import { publishToThreads, validateThreadsToken } from "./threads";
+import { decrypt } from "@/lib/crypto";
+
+/** Decrypt access token, handling both encrypted and legacy plaintext values */
+function decryptToken(token: string): string {
+  if (!process.env.ENCRYPTION_KEY) return token;
+  try { return decrypt(token); } catch { return token; }
+}
 
 export async function publishPost(postId: string): Promise<void> {
   const post = await prisma.post.findUnique({
@@ -27,7 +34,9 @@ export async function publishPost(postId: string): Promise<void> {
 
   const results = await Promise.allSettled(
     post.targets.map(async (target) => {
-      const account = target.socialAccount;
+      const rawAccount = target.socialAccount;
+      // Decrypt token at the boundary - all downstream code receives plaintext
+      const account = { ...rawAccount, accessToken: decryptToken(rawAccount.accessToken) };
       console.log(`[Publisher] Processing target ${target.id}: ${account.platform} (${account.accountName})`);
 
       try {

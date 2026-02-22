@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
 
-  const testMessage = message || `🧪 Test post from Social Scheduler - ${new Date().toLocaleString()}`;
+  const testMessage = message || `🧪 Test post from CtxPost - ${new Date().toLocaleString()}`;
 
   try {
     if (account.platform === "FACEBOOK") {

@@ -8,6 +8,15 @@ import { redirect } from "next/navigation";
 import { detectContentType } from "@/lib/utils/content-type-detector";
 import { getTranslations } from "next-intl/server";
 
+/** Verify all target account IDs belong to the authenticated user */
+async function verifyAccountOwnership(userId: string, accountIds: string[]): Promise<boolean> {
+  if (accountIds.length === 0) return true;
+  const count = await prisma.socialAccount.count({
+    where: { id: { in: accountIds }, userId },
+  });
+  return count === accountIds.length;
+}
+
 export async function createPost(formData: FormData) {
   const t = await getTranslations("common");
   const session = await auth();
@@ -25,6 +34,11 @@ export async function createPost(formData: FormData) {
   const parsed = postSchema.safeParse(rawData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
+  }
+
+  // Verify all target accounts belong to this user
+  if (!await verifyAccountOwnership(session.user.id, parsed.data.targetAccountIds)) {
+    return { error: "Invalid target accounts" };
   }
 
   const contentType = detectContentType(parsed.data.content);
@@ -91,6 +105,11 @@ export async function updatePost(postId: string, formData: FormData) {
   const parsed = postSchema.safeParse(rawData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
+  }
+
+  // Verify all target accounts belong to this user
+  if (!await verifyAccountOwnership(session.user.id, parsed.data.targetAccountIds)) {
+    return { error: "Invalid target accounts" };
   }
 
   const contentType = detectContentType(parsed.data.content);
@@ -186,6 +205,12 @@ export async function bulkCreatePosts(
 ) {
   const session = await auth();
   if (!session?.user?.id) return { created: 0, errors: posts.length };
+
+  // Collect all unique account IDs and verify ownership in one query
+  const allAccountIds = [...new Set(posts.flatMap((p) => p.targetAccountIds))];
+  if (!await verifyAccountOwnership(session.user.id, allAccountIds)) {
+    return { created: 0, errors: posts.length };
+  }
 
   let created = 0;
   let errors = 0;

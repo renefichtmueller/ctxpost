@@ -132,7 +132,7 @@ export function BenchmarksWidget({ platforms }: BenchmarksWidgetProps) {
         </CardHeader>
         <CardContent>
           <div className="text-center py-6 text-muted-foreground">
-            <Info className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <Info className="h-8 w-8 mx-auto mb-2 opacity-75" />
             <p className="text-sm">{t("connectAccountsFirst")}</p>
           </div>
         </CardContent>

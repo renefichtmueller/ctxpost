@@ -13,7 +13,7 @@ type ThreadsCredentials = {
   redirectUri: string;
 };
 
-export function getThreadsAuthUrl(creds?: ThreadsCredentials): string {
+export function getThreadsAuthUrl(creds?: ThreadsCredentials): { url: string; state: string } {
   const appId = creds?.appId || process.env.THREADS_APP_ID!;
   const redirectUri = creds?.redirectUri || process.env.THREADS_REDIRECT_URI!;
 
@@ -25,7 +25,7 @@ export function getThreadsAuthUrl(creds?: ThreadsCredentials): string {
     response_type: "code",
     state,
   });
-  return `https://threads.net/oauth/authorize?${params}`;
+  return { url: `https://threads.net/oauth/authorize?${params}`, state };
 }
 
 export async function exchangeThreadsCode(code: string, creds?: ThreadsCredentials) {

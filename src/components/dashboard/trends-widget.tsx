@@ -226,7 +226,7 @@ export function TrendsWidget() {
               <LoadingSkeleton />
             ) : googleTrends.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Flame className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <Flame className="h-8 w-8 mx-auto mb-2 opacity-75" />
                 <p className="text-sm">{t("noTrends")}</p>
               </div>
             ) : (
@@ -309,7 +309,7 @@ export function TrendsWidget() {
               <LoadingSkeleton />
             ) : displayedRssItems.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Rss className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <Rss className="h-8 w-8 mx-auto mb-2 opacity-75" />
                 <p className="text-sm">{t("noNews")}</p>
               </div>
             ) : (
@@ -378,7 +378,7 @@ export function TrendsWidget() {
           <TabsContent value="topics" className="mt-4">
             {displayedTopics.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <Lightbulb className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <Lightbulb className="h-8 w-8 mx-auto mb-2 opacity-75" />
                 <p className="text-sm">{t("noTopics")}</p>
                 <Button
                   variant="outline"
@@ -392,22 +392,29 @@ export function TrendsWidget() {
               </div>
             ) : (
               <div>
-                <p className="text-xs text-muted-foreground mb-3">
+                <p className="text-xs text-muted-foreground mb-1.5">
                   {t("topicsDescription")}
+                </p>
+                <p className="text-[11px] text-muted-foreground/70 mb-3 leading-relaxed">
+                  {t("hotTopicsExplanation")}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {displayedTopics.map((topic, i) => (
-                    <Badge
+                    <Link
                       key={i}
-                      variant={i < 3 ? "default" : "secondary"}
-                      className={`text-xs px-3 py-1 cursor-default ${
-                        i < 3 ? getCategoryBadgeColor(i) : ""
-                      }`}
+                      href={`/posts/new?prefill=${encodeURIComponent(topic.topic)}`}
                     >
-                      <Flame className={`h-3 w-3 mr-1 ${i < 3 ? "text-yellow-200" : ""}`} />
-                      {topic.topic}
-                      <span className="ml-1.5 opacity-60">{topic.count}</span>
-                    </Badge>
+                      <Badge
+                        variant={i < 3 ? "default" : "secondary"}
+                        className={`text-xs px-3 py-1 cursor-pointer hover:opacity-80 transition-opacity ${
+                          i < 3 ? getCategoryBadgeColor(i) : ""
+                        }`}
+                      >
+                        <Flame className={`h-3 w-3 mr-1 ${i < 3 ? "text-yellow-200" : ""}`} />
+                        {topic.topic}
+                        <span className="ml-1.5 opacity-60">{topic.count}</span>
+                      </Badge>
+                    </Link>
                   ))}
                 </div>
 
@@ -415,14 +422,18 @@ export function TrendsWidget() {
                 {trendingTopics.length > 5 && (
                   <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t">
                     {trendingTopics.slice(5, 10).map((topic, i) => (
-                      <Badge
+                      <Link
                         key={i + 5}
-                        variant="outline"
-                        className="text-[10px] px-2 py-0.5 cursor-default"
+                        href={`/posts/new?prefill=${encodeURIComponent(topic.topic)}`}
                       >
-                        {topic.topic}
-                        <span className="ml-1 opacity-50">{topic.count}</span>
-                      </Badge>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-2 py-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                          {topic.topic}
+                          <span className="ml-1 opacity-75">{topic.count}</span>
+                        </Badge>
+                      </Link>
                     ))}
                   </div>
                 )}

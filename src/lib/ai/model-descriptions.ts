@@ -6,7 +6,7 @@
 export interface ModelDescription {
   name: string;
   family: string;
-  category: "text" | "vision" | "embedding" | "reasoning";
+  category: "text" | "vision" | "embedding" | "reasoning" | "code" | "image";
   parameterSize: string;
   vramRequired: string;
   strengths: string[];
@@ -30,6 +30,16 @@ export const MODEL_DESCRIPTIONS: Record<string, ModelDescription> = {
     bestFor: ["bestForQuickDrafts", "bestForHashtagGeneration", "bestForSimpleTexts"],
     descriptionKey: "desc_qwen25_7b",
   },
+  "qwen2.5:7b-instruct": {
+    name: "Qwen 2.5 7B Instruct",
+    family: "Qwen",
+    category: "text",
+    parameterSize: "7B",
+    vramRequired: "~5 GB",
+    strengths: ["strengthFastInference", "strengthGoodInstructionFollowing", "strengthGoodMultilingual"],
+    bestFor: ["bestForFollowingGuidelines", "bestForQuickDrafts", "bestForStructuredContent"],
+    descriptionKey: "desc_qwen25_7b_instruct",
+  },
   "qwen2.5:14b": {
     name: "Qwen 2.5 14B",
     family: "Qwen",
@@ -49,6 +59,28 @@ export const MODEL_DESCRIPTIONS: Record<string, ModelDescription> = {
     strengths: ["strengthExcellentQuality", "strengthBestQwenContent", "strengthStrongJson"],
     bestFor: ["bestForHighQualityContent", "bestForComplexAnalysis", "bestForBrandVoice"],
     descriptionKey: "desc_qwen25_32b",
+  },
+  "qwen2.5:72b": {
+    name: "Qwen 2.5 72B",
+    family: "Qwen",
+    category: "text",
+    parameterSize: "72B",
+    vramRequired: "~45 GB",
+    strengths: ["strengthTopTierQuality", "strengthBestQwenContent", "strengthStrongMultilingual"],
+    bestFor: ["bestForPremiumContent", "bestForComplexAnalysis", "bestForCreativeWriting"],
+    descriptionKey: "desc_qwen25_72b",
+  },
+
+  // ── Qwen3 Coder family ──
+  "qwen3-coder:latest": {
+    name: "Qwen3 Coder",
+    family: "Qwen",
+    category: "code",
+    parameterSize: "varies",
+    vramRequired: "~8 GB",
+    strengths: ["strengthCodeGeneration", "strengthCodeReview", "strengthFast"],
+    bestFor: ["bestForCodeGeneration", "bestForTechnicalContent", "bestForAutomationScripts"],
+    descriptionKey: "desc_qwen3_coder",
   },
 
   // ── Llama 3.1 family ──
@@ -73,6 +105,38 @@ export const MODEL_DESCRIPTIONS: Record<string, ModelDescription> = {
     descriptionKey: "desc_llama31_70b",
   },
 
+  // ── Llama 3.2 family ──
+  "llama3.2:latest": {
+    name: "Llama 3.2",
+    family: "Llama",
+    category: "text",
+    parameterSize: "3B",
+    vramRequired: "~2 GB",
+    strengths: ["strengthVeryEfficient", "strengthFast", "strengthLowResources"],
+    bestFor: ["bestForQuickDrafts", "bestForSimpleTexts", "bestForEdgeDeployment"],
+    descriptionKey: "desc_llama32_latest",
+  },
+  "llama3.2:1b": {
+    name: "Llama 3.2 1B",
+    family: "Llama",
+    category: "text",
+    parameterSize: "1B",
+    vramRequired: "~1 GB",
+    strengths: ["strengthUltraLight", "strengthFast", "strengthLowResources"],
+    bestFor: ["bestForSimpleTexts", "bestForEdgeDeployment", "bestForQuickDrafts"],
+    descriptionKey: "desc_llama32_1b",
+  },
+  "llama3.2:3b": {
+    name: "Llama 3.2 3B",
+    family: "Llama",
+    category: "text",
+    parameterSize: "3B",
+    vramRequired: "~2 GB",
+    strengths: ["strengthVeryEfficient", "strengthFast", "strengthLowResources"],
+    bestFor: ["bestForQuickDrafts", "bestForSimpleTexts", "bestForEdgeDeployment"],
+    descriptionKey: "desc_llama32_latest",
+  },
+
   // ── Mistral family ──
   "mistral:7b": {
     name: "Mistral 7B",
@@ -83,6 +147,16 @@ export const MODEL_DESCRIPTIONS: Record<string, ModelDescription> = {
     strengths: ["strengthVeryEfficient", "strengthGoodEuropeanLangs", "strengthFast"],
     bestFor: ["bestForMultilingualContent", "bestForQuickGeneration", "bestForEfficientProcessing"],
     descriptionKey: "desc_mistral_7b",
+  },
+  "mistral:latest": {
+    name: "Mistral Latest",
+    family: "Mistral",
+    category: "text",
+    parameterSize: "7B",
+    vramRequired: "~5 GB",
+    strengths: ["strengthVeryEfficient", "strengthGoodEuropeanLangs", "strengthFast"],
+    bestFor: ["bestForMultilingualContent", "bestForQuickGeneration", "bestForEfficientProcessing"],
+    descriptionKey: "desc_mistral_latest",
   },
 
   // ── Gemma family ──
@@ -117,6 +191,16 @@ export const MODEL_DESCRIPTIONS: Record<string, ModelDescription> = {
     strengths: ["strengthChainOfThought", "strengthAnalyticalThinking", "strengthProblemSolving"],
     bestFor: ["bestForDataAnalysis", "bestForStrategyPlanning", "bestForComplexDecisions"],
     descriptionKey: "desc_deepseek_r1_14b",
+  },
+  "deepseek-r1:32b": {
+    name: "DeepSeek R1 32B",
+    family: "DeepSeek",
+    category: "reasoning",
+    parameterSize: "32B",
+    vramRequired: "~20 GB",
+    strengths: ["strengthChainOfThought", "strengthDeepAnalysis", "strengthHighQuality"],
+    bestFor: ["bestForComplexAnalysis", "bestForStrategyPlanning", "bestForResearchTasks"],
+    descriptionKey: "desc_deepseek_r1_32b",
   },
 
   // ── Vision models ──
@@ -161,6 +245,18 @@ export const MODEL_DESCRIPTIONS: Record<string, ModelDescription> = {
     descriptionKey: "desc_llava_llama3_8b",
   },
 
+  // ── Image generation models ──
+  "x/z-image-turbo:latest": {
+    name: "Z Image Turbo",
+    family: "Z-Image",
+    category: "image",
+    parameterSize: "varies",
+    vramRequired: "~6 GB",
+    strengths: ["strengthFastImageGen", "strengthGoodQuality", "strengthLowResources"],
+    bestFor: ["bestForSocialMediaImages", "bestForQuickImageGen", "bestForVisualContent"],
+    descriptionKey: "desc_z_image_turbo",
+  },
+
   // ── Embedding models ──
   "nomic-embed-text": {
     name: "Nomic Embed Text",
@@ -175,21 +271,160 @@ export const MODEL_DESCRIPTIONS: Record<string, ModelDescription> = {
 };
 
 /**
- * Get the description for a model, with fallback for unknown models.
+ * Infer a category from a model name string for unknown models.
  */
-export function getModelDescription(modelName: string): ModelDescription | null {
+function inferCategory(modelName: string): ModelDescription["category"] {
+  const lower = modelName.toLowerCase();
+  if (lower.includes("llava") || lower.includes("vision") || lower.includes("moondream")) return "vision";
+  if (lower.includes("code") || lower.includes("coder") || lower.includes("starcoder") || lower.includes("codellama")) return "code";
+  if (lower.includes("deepseek-r1") || lower.includes("reasoning")) return "reasoning";
+  if (lower.includes("embed") || lower.includes("nomic")) return "embedding";
+  if (lower.includes("image") || lower.includes("flux") || lower.includes("sdxl") || lower.includes("stable-diffusion")) return "image";
+  return "text";
+}
+
+/**
+ * Estimate VRAM from parameter size string or model name.
+ */
+function estimateVram(paramSize: string): string {
+  const match = paramSize.match(/([\d.]+)\s*(b|m)/i);
+  if (!match) return "~4 GB";
+  const num = parseFloat(match[1]);
+  const unit = match[2].toLowerCase();
+  if (unit === "m") return "~0.5 GB";
+  if (num <= 1) return "~1 GB";
+  if (num <= 3) return "~2 GB";
+  if (num <= 8) return "~5 GB";
+  if (num <= 14) return "~10 GB";
+  if (num <= 27) return "~17 GB";
+  if (num <= 34) return "~20 GB";
+  if (num <= 72) return "~45 GB";
+  return "~50+ GB";
+}
+
+/**
+ * Extract a human-friendly name from an Ollama model name string.
+ */
+function humanizeName(modelName: string): string {
+  const [base, tag] = modelName.split(":");
+  const name = base
+    .split(/[-_/]/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+  if (tag && tag !== "latest") {
+    return `${name} ${tag.toUpperCase()}`;
+  }
+  return name;
+}
+
+/**
+ * Extract the family name from the model name.
+ */
+function inferFamily(modelName: string): string {
+  const base = modelName.split(":")[0].split("/").pop() || modelName;
+  const familyMap: Record<string, string> = {
+    qwen: "Qwen",
+    llama: "Llama",
+    mistral: "Mistral",
+    gemma: "Gemma",
+    deepseek: "DeepSeek",
+    llava: "LLaVA",
+    bakllava: "BakLLaVA",
+    phi: "Phi",
+    nomic: "Nomic",
+    starcoder: "StarCoder",
+    codellama: "CodeLlama",
+    vicuna: "Vicuna",
+    yi: "Yi",
+    falcon: "Falcon",
+    orca: "Orca",
+  };
+  const lower = base.toLowerCase();
+  for (const [key, family] of Object.entries(familyMap)) {
+    if (lower.startsWith(key)) return family;
+  }
+  return base.charAt(0).toUpperCase() + base.slice(1).split(/[^a-zA-Z]/)[0];
+}
+
+/**
+ * Default strengths based on inferred category.
+ */
+function defaultStrengths(category: ModelDescription["category"]): string[] {
+  switch (category) {
+    case "text":
+      return ["strengthGoodQuality", "strengthFast", "strengthReliable"];
+    case "vision":
+      return ["strengthImageUnderstanding", "strengthGoodDescriptions", "strengthFastProcessing"];
+    case "code":
+      return ["strengthCodeGeneration", "strengthCodeReview", "strengthFast"];
+    case "reasoning":
+      return ["strengthChainOfThought", "strengthAnalyticalThinking", "strengthProblemSolving"];
+    case "embedding":
+      return ["strengthHighQualityEmbeddings", "strengthFast", "strengthLongContext"];
+    case "image":
+      return ["strengthFastImageGen", "strengthGoodQuality", "strengthLowResources"];
+  }
+}
+
+/**
+ * Default bestFor based on inferred category.
+ */
+function defaultBestFor(category: ModelDescription["category"]): string[] {
+  switch (category) {
+    case "text":
+      return ["bestForContentGeneration", "bestForGeneralTasks", "bestForQuickDrafts"];
+    case "vision":
+      return ["bestForImageAnalysis", "bestForAltText", "bestForVisualContentReview"];
+    case "code":
+      return ["bestForCodeGeneration", "bestForTechnicalContent", "bestForAutomationScripts"];
+    case "reasoning":
+      return ["bestForDataAnalysis", "bestForStrategyPlanning", "bestForComplexDecisions"];
+    case "embedding":
+      return ["bestForRAGSystems", "bestForSemanticSearch", "bestForDocumentSimilarity"];
+    case "image":
+      return ["bestForSocialMediaImages", "bestForQuickImageGen", "bestForVisualContent"];
+  }
+}
+
+/**
+ * Get the description for a model, with fallback for unknown models.
+ * Now generates a sensible fallback instead of returning null.
+ */
+export function getModelDescription(
+  modelName: string,
+  parameterSize?: string,
+): ModelDescription {
   // Exact match
   if (MODEL_DESCRIPTIONS[modelName]) {
     return MODEL_DESCRIPTIONS[modelName];
   }
 
-  // Try without tag (e.g., "qwen2.5:32b-instruct" → "qwen2.5:32b")
+  // Try without tag (e.g., "qwen2.5:32b-instruct" -> "qwen2.5:32b")
   const baseName = modelName.split("-")[0];
   if (MODEL_DESCRIPTIONS[baseName]) {
     return MODEL_DESCRIPTIONS[baseName];
   }
 
-  return null;
+  // Try with :latest removed or added
+  const withoutTag = modelName.split(":")[0];
+  const withLatest = `${withoutTag}:latest`;
+  if (MODEL_DESCRIPTIONS[withLatest]) {
+    return MODEL_DESCRIPTIONS[withLatest];
+  }
+
+  // Generate a sensible fallback
+  const category = inferCategory(modelName);
+  const pSize = parameterSize || "unknown";
+  return {
+    name: humanizeName(modelName),
+    family: inferFamily(modelName),
+    category,
+    parameterSize: pSize,
+    vramRequired: estimateVram(pSize),
+    strengths: defaultStrengths(category),
+    bestFor: defaultBestFor(category),
+    descriptionKey: `desc_fallback_${category}`,
+  };
 }
 
 /**
@@ -209,5 +444,9 @@ export function getCategoryStyle(category: ModelDescription["category"]): {
       return { colorClass: "text-orange-600", bgClass: "bg-orange-500/15", labelKey: "categoryEmbedding" };
     case "reasoning":
       return { colorClass: "text-emerald-600", bgClass: "bg-emerald-500/15", labelKey: "categoryReasoning" };
+    case "code":
+      return { colorClass: "text-cyan-600", bgClass: "bg-cyan-500/15", labelKey: "categoryCode" };
+    case "image":
+      return { colorClass: "text-pink-600", bgClass: "bg-pink-500/15", labelKey: "categoryImage" };
   }
 }

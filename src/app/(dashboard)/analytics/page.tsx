@@ -11,6 +11,7 @@ import { ContentTypeChart } from "@/components/analytics/content-type-chart";
 import { AIInsightsCard } from "@/components/analytics/ai-insights-card";
 import { AIPerformanceCard } from "@/components/analytics/ai-performance-card";
 import { SchedulingHeatmap } from "@/components/analytics/scheduling-heatmap";
+import { ContentPerformanceCard } from "@/components/analytics/content-performance-card";
 import { AnalyticsTabs } from "./analytics-tabs";
 
 // ─── Scoring-Logik ──────────────────────────────────────
@@ -189,10 +190,10 @@ export default async function AnalyticsPage() {
       where: { userId, type: "CONTENT_SUGGESTIONS" },
       orderBy: { createdAt: "desc" },
     }),
-    // Post-Frequenz
+    // Post-Frequenz (enhanced: includes status for filtering)
     prisma.post.findMany({
-      where: { userId, createdAt: { gte: twelveWeeksAgo } },
-      select: { createdAt: true },
+      where: { userId },
+      select: { createdAt: true, status: true, publishedAt: true },
       orderBy: { createdAt: "asc" },
     }),
     // KI-Performance (letzte 10 Operationen)
@@ -217,14 +218,76 @@ export default async function AnalyticsPage() {
     ? Math.round(allPostContents.reduce((sum, p) => sum + p.content.length, 0) / allPostContents.length)
     : 0;
 
-  // ─── Post-Frequenz ─────────────────────────────────────
+  // ─── Post-Frequenz (Enhanced) ─────────────────────────
 
-  const freqMap = new Map<string, number>();
+  const freqMap = new Map<string, { all: number; published: number; scheduled: number }>();
   for (const p of postFrequencyData) {
     const week = getWeekLabel(p.createdAt);
-    freqMap.set(week, (freqMap.get(week) || 0) + 1);
+    const existing = freqMap.get(week) || { all: 0, published: 0, scheduled: 0 };
+    existing.all += 1;
+    if (p.status === "PUBLISHED") existing.published += 1;
+    if (p.status === "SCHEDULED") existing.scheduled += 1;
+    freqMap.set(week, existing);
   }
-  const frequencyData = Array.from(freqMap.entries()).map(([week, posts]) => ({ week, posts }));
+  const enhancedFrequencyData = Array.from(freqMap.entries()).map(([week, counts]) => ({
+    week,
+    all: counts.all,
+    published: counts.published,
+    scheduled: counts.scheduled,
+  }));
+
+  // ─── Content Performance ────────────────────────────────
+
+  // Average engagement rate across all published posts with analytics
+  let avgEngagementRate = 0;
+  let bestContentType: string | null = null;
+  let bestContentTypeRate = 0;
+  let mostActiveDay: string | null = null;
+  let mostActiveDayCount = 0;
+  const hasContentPerformanceData = contentTypeAnalytics.length > 0 || hasEngagementData;
+
+  if (hasEngagementData && totalImpressions > 0) {
+    avgEngagementRate = ((totalLikes + totalComments + totalShares) / totalImpressions) * 100;
+  }
+
+  // Best performing content type
+  const ctEngagementRates = new Map<string, { totalRate: number; count: number }>();
+  for (const post of contentTypeAnalytics) {
+    const type = post.contentType || "TEXT";
+    const a = post.analytics[0];
+    if (!a) continue;
+    const rate = a.impressions > 0 ? ((a.likes + a.comments + a.shares) / a.impressions) * 100 : 0;
+    const existing = ctEngagementRates.get(type) || { totalRate: 0, count: 0 };
+    existing.totalRate += rate;
+    existing.count += 1;
+    ctEngagementRates.set(type, existing);
+  }
+  let highestRate = 0;
+  for (const [type, data] of ctEngagementRates.entries()) {
+    const avgRate = data.count > 0 ? data.totalRate / data.count : 0;
+    if (avgRate > highestRate) {
+      highestRate = avgRate;
+      bestContentType = type;
+      bestContentTypeRate = avgRate;
+    }
+  }
+
+  // Most active posting day (from published posts)
+  const dayCountMap = new Map<number, number>();
+  for (const p of postFrequencyData) {
+    if (p.status === "PUBLISHED" && p.publishedAt) {
+      const day = p.publishedAt.getDay();
+      dayCountMap.set(day, (dayCountMap.get(day) || 0) + 1);
+    }
+  }
+  let maxDayCount = 0;
+  for (const [day, count] of dayCountMap.entries()) {
+    if (count > maxDayCount) {
+      maxDayCount = count;
+      mostActiveDay = String(day);
+      mostActiveDayCount = count;
+    }
+  }
 
   // ─── Status-Verteilung ─────────────────────────────────
 
@@ -397,9 +460,19 @@ export default async function AnalyticsPage() {
         hasEngagementData={hasEngagementData}
       />
 
-      {/* Sektion 2: Post-Aktivität */}
+      {/* Sektion 2: Content Performance */}
+      <ContentPerformanceCard
+        avgEngagementRate={avgEngagementRate}
+        bestContentType={bestContentType}
+        bestContentTypeRate={bestContentTypeRate}
+        mostActiveDay={mostActiveDay}
+        mostActiveDayCount={mostActiveDayCount}
+        hasData={hasContentPerformanceData}
+      />
+
+      {/* Sektion 3: Post-Aktivität */}
       <div className="grid gap-6 md:grid-cols-2">
-        <PostFrequencyChart data={frequencyData} />
+        <PostFrequencyChart data={enhancedFrequencyData} />
         <StatusDistributionChart data={statusData} />
       </div>
 

@@ -1,5 +1,5 @@
-import { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { withAuthAndRateLimit } from "@/lib/api-utils";
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { getUserAIConfig } from "@/lib/ai/ai-provider";
@@ -10,25 +10,22 @@ import path from "path";
 export const maxDuration = 600;
 
 async function saveImageToDisk(imageBuffer: Buffer): Promise<string> {
-  const imagesDir = path.join(process.cwd(), "public", "generated-images");
-  await mkdir(imagesDir, { recursive: true });
+  // Save to <cwd>/uploads/ so it's served by /api/uploads/[filename]
+  // This works correctly in both dev and PM2 standalone mode
+  const uploadsDir = path.join(process.cwd(), "uploads");
+  await mkdir(uploadsDir, { recursive: true });
   const filename = `img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
-  const filepath = path.join(imagesDir, filename);
+  const filepath = path.join(uploadsDir, filename);
   await writeFile(filepath, imageBuffer);
-  return `/generated-images/${filename}`;
+  return `/api/uploads/${filename}`;
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  const authResult = await withAuthAndRateLimit(request);
+  if (authResult instanceof NextResponse) return authResult;
 
   const t = await getTranslations("image");
-  const userId = session.user.id;
+  const userId = authResult.userId;
   let prompt: string;
   let negativePrompt: string;
   let width: number;

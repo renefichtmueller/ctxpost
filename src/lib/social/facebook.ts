@@ -7,7 +7,7 @@ type FacebookCredentials = {
   redirectUri: string;
 };
 
-export function getFacebookAuthUrl(creds?: FacebookCredentials): string {
+export function getFacebookAuthUrl(creds?: FacebookCredentials): { url: string; state: string } {
   const appId = creds?.appId || process.env.FACEBOOK_APP_ID!;
   const redirectUri = creds?.redirectUri || process.env.FACEBOOK_REDIRECT_URI!;
   const state = crypto.randomUUID();
@@ -18,7 +18,7 @@ export function getFacebookAuthUrl(creds?: FacebookCredentials): string {
     response_type: "code",
     state,
   });
-  return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params}`;
+  return { url: `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params}`, state };
 }
 
 export async function exchangeFacebookCode(code: string, creds?: FacebookCredentials) {

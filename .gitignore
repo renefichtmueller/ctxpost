@@ -34,6 +34,8 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+.env.production
+.env.server
 
 # vercel
 .vercel
@@ -42,5 +44,30 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# generated prisma
 /src/generated/prisma
+
+# python cache
 training/scripts/__pycache__/
+__pycache__/
+*.pyc
+
+# logs
+/logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# uploads (user-generated)
+/public/uploads/
+
+# docker volumes
+/data/

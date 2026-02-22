@@ -42,6 +42,8 @@ import {
   ChevronDown,
   ChevronUp,
   MemoryStick,
+  Code,
+  Palette,
 } from "lucide-react";
 import { updateAISettings } from "@/actions/ai-settings";
 import {
@@ -80,11 +82,15 @@ const POPULAR_TEXT_MODELS = [
   { name: "qwen2.5:32b" },
   { name: "qwen2.5:14b" },
   { name: "qwen2.5:7b" },
+  { name: "qwen2.5:72b" },
   { name: "llama3.1:8b" },
   { name: "llama3.1:70b" },
+  { name: "llama3.2:latest" },
   { name: "mistral:7b" },
   { name: "gemma2:27b" },
   { name: "deepseek-r1:14b" },
+  { name: "deepseek-r1:32b" },
+  { name: "qwen3-coder:latest" },
 ];
 
 const POPULAR_VISION_MODELS = [
@@ -92,6 +98,7 @@ const POPULAR_VISION_MODELS = [
   { name: "llava:13b" },
   { name: "bakllava:latest" },
   { name: "llava-llama3:8b" },
+  { name: "x/z-image-turbo:latest" },
 ];
 
 /** Category icon component */
@@ -101,6 +108,8 @@ function CategoryIcon({ category }: { category: ModelDescription["category"] }) 
     case "vision": return <Eye className="h-3 w-3" />;
     case "embedding": return <Database className="h-3 w-3" />;
     case "reasoning": return <Brain className="h-3 w-3" />;
+    case "code": return <Code className="h-3 w-3" />;
+    case "image": return <Palette className="h-3 w-3" />;
   }
 }
 
@@ -635,9 +644,9 @@ export function ModelManager({
           ) : (
             <div className="space-y-3">
               {models.map((model) => {
-                const desc = getModelDescription(model.name);
+                const desc = getModelDescription(model.name, model.details.parameter_size);
                 const isExpanded = expandedModel === model.name;
-                const catStyle = desc ? getCategoryStyle(desc.category) : null;
+                const catStyle = getCategoryStyle(desc.category);
                 return (
                   <div
                     key={model.name}
@@ -661,12 +670,10 @@ export function ModelManager({
                           {model.name === analysisModel && (
                             <Badge className="text-[10px] bg-green-500/15 text-green-700 dark:text-green-400 border-0">{t("analysisTag")}</Badge>
                           )}
-                          {catStyle && desc && (
-                            <Badge className={`text-[10px] ${catStyle.bgClass} ${catStyle.colorClass} border-0 gap-0.5`}>
-                              <CategoryIcon category={desc.category} />
-                              {t(catStyle.labelKey)}
-                            </Badge>
-                          )}
+                          <Badge className={`text-[10px] ${catStyle.bgClass} ${catStyle.colorClass} border-0 gap-0.5`}>
+                            <CategoryIcon category={desc.category} />
+                            {t(catStyle.labelKey)}
+                          </Badge>
                         </div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                           <span className="flex items-center gap-1">
@@ -676,25 +683,21 @@ export function ModelManager({
                           <span>{model.details.quantization_level}</span>
                           <span>{model.details.family}</span>
                           <span>{formatSize(model.size)}</span>
-                          {desc && (
-                            <span className="flex items-center gap-0.5">
-                              <MemoryStick className="h-3 w-3" />
-                              {desc.vramRequired}
-                            </span>
-                          )}
+                          <span className="flex items-center gap-0.5">
+                            <MemoryStick className="h-3 w-3" />
+                            {desc.vramRequired}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        {desc && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setExpandedModel(isExpanded ? null : model.name)}
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                          </Button>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setExpandedModel(isExpanded ? null : model.name)}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -710,7 +713,7 @@ export function ModelManager({
                         </Button>
                       </div>
                     </div>
-                    {isExpanded && desc && (
+                    {isExpanded && (
                       <ModelDetailsExpanded desc={desc} t={t} />
                     )}
                   </div>
@@ -840,11 +843,7 @@ export function ModelManager({
                         </Badge>
                       )}
                     </div>
-                    {desc ? (
-                      <ModelInfoCompact desc={desc} t={t} />
-                    ) : (
-                      <p className="text-xs text-muted-foreground mt-0.5">{pm.name}</p>
-                    )}
+                    <ModelInfoCompact desc={desc} t={t} />
                   </button>
                 );
               })}
@@ -883,11 +882,7 @@ export function ModelManager({
                         </Badge>
                       )}
                     </div>
-                    {desc ? (
-                      <ModelInfoCompact desc={desc} t={t} />
-                    ) : (
-                      <p className="text-xs text-muted-foreground mt-0.5">{pm.name}</p>
-                    )}
+                    <ModelInfoCompact desc={desc} t={t} />
                   </button>
                 );
               })}

@@ -17,7 +17,10 @@ export async function createShortLink(data: {
   if (!session?.user?.id) return { error: "notAuthenticated" };
 
   try {
-    new URL(data.url);
+    const parsed = new URL(data.url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return { error: "invalidUrl" };
+    }
   } catch {
     return { error: "invalidUrl" };
   }

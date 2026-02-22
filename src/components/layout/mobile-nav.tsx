@@ -76,8 +76,8 @@ export function MobileNav() {
             className="flex items-center gap-3"
             onClick={() => setOpen(false)}
           >
-            <Image src="/logo.svg" alt="Social Scheduler" width={32} height={32} className="rounded-lg" />
-            <span className="text-lg font-bold">Social Scheduler</span>
+            <Image src="/logo.svg" alt="CtxPost" width={32} height={32} className="rounded-lg" />
+            <span className="text-lg font-bold">CtxPost</span>
           </Link>
         </div>
         <nav className="p-4 space-y-1">

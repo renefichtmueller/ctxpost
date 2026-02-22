@@ -51,7 +51,7 @@ export async function getUserAIConfig(
   return {
     provider,
     model,
-    ollamaUrl: user?.ollamaUrl ?? "http://192.168.178.169:11434",
+    ollamaUrl: user?.ollamaUrl ?? "http://localhost:11434",
     imageGenUrl: user?.imageGenUrl ?? undefined,
     imageGenProvider: (user?.imageGenProvider as ImageGenProvider) ?? "sd-webui",
   };

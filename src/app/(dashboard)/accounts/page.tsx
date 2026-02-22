@@ -11,12 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PLATFORMS } from "@/lib/constants";
-import { getFacebookAuthUrl } from "@/lib/social/facebook";
-import { getLinkedInAuthUrl } from "@/lib/social/linkedin";
-import { getInstagramAuthUrl } from "@/lib/social/instagram";
-import { getThreadsAuthUrl } from "@/lib/social/threads";
 import { disconnectSocialAccount } from "@/actions/social-accounts";
-import { getCredentialsForPlatform, getInstagramCredentials } from "@/lib/api-credentials";
 import { Facebook, Linkedin, Plus, Unplug, Twitter, Instagram, AtSign, AlertTriangle, RefreshCw } from "lucide-react";
 import type { Platform } from "@prisma/client";
 import { getTranslations } from "next-intl/server";
@@ -33,19 +28,7 @@ export default async function AccountsPage() {
     orderBy: [{ platform: "asc" }, { accountType: "asc" }, { createdAt: "desc" }],
   });
 
-  // Fetch per-user credentials from DB (falls back to env vars)
-  const [fbCreds, liCreds, igCreds, thCreds] = await Promise.all([
-    getCredentialsForPlatform(session.user.id, "facebook"),
-    getCredentialsForPlatform(session.user.id, "linkedin"),
-    getInstagramCredentials(session.user.id),
-    getCredentialsForPlatform(session.user.id, "threads"),
-  ]);
-
-  const facebookAuthUrl = getFacebookAuthUrl(fbCreds);
-  const linkedInAuthUrl = getLinkedInAuthUrl(liCreds);
-  const instagramAuthUrl = getInstagramAuthUrl(igCreds);
-  const threadsAuthUrl = getThreadsAuthUrl(thCreds);
-
+  // All OAuth flows now go through server-side authorize routes (CSRF-protected)
   const platformCards = [
     {
       platform: "FACEBOOK",
@@ -54,7 +37,7 @@ export default async function AccountsPage() {
       name: "Facebook",
       desc: t("facebookDesc"),
       connectLabel: t("facebookConnect"),
-      authUrl: facebookAuthUrl,
+      authUrl: "/api/social/facebook/authorize",
     },
     {
       platform: "LINKEDIN",
@@ -63,7 +46,7 @@ export default async function AccountsPage() {
       name: "LinkedIn",
       desc: t("linkedinDesc"),
       connectLabel: t("linkedinConnect"),
-      authUrl: linkedInAuthUrl,
+      authUrl: "/api/social/linkedin/authorize",
     },
     {
       platform: "TWITTER",
@@ -81,7 +64,7 @@ export default async function AccountsPage() {
       name: "Instagram",
       desc: t("instagramDesc"),
       connectLabel: t("instagramConnect"),
-      authUrl: instagramAuthUrl,
+      authUrl: "/api/social/instagram/authorize",
     },
     {
       platform: "THREADS",
@@ -90,7 +73,7 @@ export default async function AccountsPage() {
       name: "Threads",
       desc: t("threadsDesc"),
       connectLabel: t("threadsConnect"),
-      authUrl: threadsAuthUrl,
+      authUrl: "/api/social/threads/authorize",
     },
   ];
 
@@ -217,11 +200,11 @@ export default async function AccountsPage() {
                       )}
                       {(isTokenExpired || isTokenExpiringSoon) && (
                         <a href={
-                          account.platform === "FACEBOOK" ? facebookAuthUrl :
-                          account.platform === "INSTAGRAM" ? instagramAuthUrl :
-                          account.platform === "THREADS" ? threadsAuthUrl :
+                          account.platform === "FACEBOOK" ? "/api/social/facebook/authorize" :
+                          account.platform === "INSTAGRAM" ? "/api/social/instagram/authorize" :
+                          account.platform === "THREADS" ? "/api/social/threads/authorize" :
                           account.platform === "TWITTER" ? "/api/social/twitter/authorize" :
-                          linkedInAuthUrl
+                          "/api/social/linkedin/authorize"
                         }>
                           <Button variant="outline" size="sm" className="gap-1 text-xs">
                             <RefreshCw className="h-3 w-3" />

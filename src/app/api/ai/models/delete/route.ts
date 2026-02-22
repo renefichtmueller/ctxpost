@@ -35,7 +35,7 @@ export async function DELETE(request: NextRequest) {
     select: { ollamaUrl: true, textModel: true, imageModel: true, analysisModel: true },
   });
 
-  const ollamaUrl = user?.ollamaUrl || "http://192.168.178.169:11434";
+  const ollamaUrl = user?.ollamaUrl || "http://localhost:11434";
 
   // Prevent deleting any active model
   const activeModels = [user?.textModel, user?.imageModel, user?.analysisModel].filter(Boolean);

@@ -21,8 +21,11 @@ export async function GET(
     data: { clicks: { increment: 1 } },
   });
 
-  // Build URL with UTM parameters
+  // Build URL with UTM parameters and validate protocol
   const url = new URL(link.originalUrl);
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    return NextResponse.json({ error: "Invalid URL protocol" }, { status: 400 });
+  }
   if (link.utmSource) url.searchParams.set("utm_source", link.utmSource);
   if (link.utmMedium) url.searchParams.set("utm_medium", link.utmMedium);
   if (link.utmCampaign) url.searchParams.set("utm_campaign", link.utmCampaign);

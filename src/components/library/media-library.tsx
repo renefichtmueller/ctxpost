@@ -22,6 +22,18 @@ interface MediaAsset {
   createdAt: Date;
 }
 
+/**
+ * Normalize upload URLs for backward compatibility.
+ * Old uploads stored as "/uploads/file" need to be served via "/api/uploads/file".
+ * New uploads already use "/api/uploads/file".
+ */
+function normalizeUploadUrl(url: string): string {
+  if (url.startsWith("/uploads/") && !url.startsWith("/api/uploads/")) {
+    return `/api${url}`;
+  }
+  return url;
+}
+
 interface MediaLibraryProps {
   initialAssets: MediaAsset[];
   totalAssets: number;
@@ -209,7 +221,7 @@ export function MediaLibrary({ initialAssets, totalAssets, allTags }: MediaLibra
                 <div className="aspect-square relative rounded overflow-hidden bg-muted mb-2">
                   {asset.mimeType.startsWith("image/") ? (
                     <Image
-                      src={asset.url}
+                      src={normalizeUploadUrl(asset.url)}
                       alt={asset.altText || asset.filename}
                       fill
                       className="object-cover"
@@ -266,7 +278,7 @@ export function MediaLibrary({ initialAssets, totalAssets, allTags }: MediaLibra
                 <div className="h-12 w-12 rounded overflow-hidden bg-muted flex-shrink-0">
                   {asset.mimeType.startsWith("image/") ? (
                     <Image
-                      src={asset.url}
+                      src={normalizeUploadUrl(asset.url)}
                       alt={asset.altText || asset.filename}
                       width={48}
                       height={48}

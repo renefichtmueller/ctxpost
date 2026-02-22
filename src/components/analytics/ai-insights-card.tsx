@@ -84,7 +84,7 @@ export function AIInsightsCard({
       <CardContent>
         {!hasAnyData ? (
           <div className="text-center py-6 text-muted-foreground">
-            <Sparkles className="h-10 w-10 mx-auto mb-3 opacity-30" />
+            <Sparkles className="h-10 w-10 mx-auto mb-3 opacity-60" />
             <p className="text-sm">{t("noAiAnalysisYet")}</p>
             <p className="text-xs mt-1">
               {t("startFirstAnalysisAt")}{" "}

@@ -17,11 +17,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ created: 0, message: "No new RSS items" });
     }
 
-    // Get all users who have social accounts (potential auto-post recipients)
-    const users = await prisma.user.findMany({
-      where: {
-        socialAccounts: { some: { isActive: true } },
-      },
+    // Only create RSS drafts for the first admin user (oldest account)
+    // to prevent spamming all users with unsolicited draft posts
+    const adminUser = await prisma.user.findFirst({
+      orderBy: { createdAt: "asc" },
       select: {
         id: true,
         socialAccounts: {
@@ -31,6 +30,10 @@ export async function GET(request: NextRequest) {
         },
       },
     });
+
+    if (!adminUser || adminUser.socialAccounts.length === 0) {
+      return NextResponse.json({ created: 0, message: "No admin user with active accounts" });
+    }
 
     let created = 0;
 
@@ -46,28 +49,23 @@ export async function GET(request: NextRequest) {
 
       if (existing) continue;
 
-      // Create draft posts for each user
-      for (const user of users) {
-        if (user.socialAccounts.length === 0) continue;
+      const content = `${item.title}\n\n${item.snippet || ""}\n\n${item.link || ""}`.trim();
 
-        const content = `${item.title}\n\n${item.snippet || ""}\n\n${item.link || ""}`.trim();
-
-        await prisma.post.create({
-          data: {
-            userId: user.id,
-            content,
-            contentType: "LINK",
-            status: "DRAFT", // Create as draft, user reviews before publishing
-            targets: {
-              create: user.socialAccounts.map((sa) => ({
-                socialAccountId: sa.id,
-                status: "DRAFT" as const,
-              })),
-            },
+      await prisma.post.create({
+        data: {
+          userId: adminUser.id,
+          content,
+          contentType: "LINK",
+          status: "DRAFT",
+          targets: {
+            create: adminUser.socialAccounts.map((sa) => ({
+              socialAccountId: sa.id,
+              status: "DRAFT" as const,
+            })),
           },
-        });
-        created++;
-      }
+        },
+      });
+      created++;
     }
 
     console.log(`[Cron RSS Auto-Post] Created ${created} draft posts from RSS`);

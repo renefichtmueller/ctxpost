@@ -53,7 +53,10 @@ NODE_ENV=production npx next build
 # 6. Copy static assets to standalone
 echo "▸ Preparing standalone..."
 cp -r .next/static .next/standalone/.next/static
-cp -r public .next/standalone/public
+# Use cp -r public/. (trailing dot) to merge contents into standalone/public/
+# without creating a nested public/public/ directory
+# This preserves runtime-generated files (uploaded images, etc.)
+cp -r public/. .next/standalone/public/
 
 # 7. Restart PM2
 echo "▸ Restarting application..."
@@ -95,7 +98,7 @@ echo ""
 echo "  To setup Cloudflare Tunnel:"
 echo "  1. cloudflared tunnel login"
 echo "  2. cloudflared tunnel create social-scheduler"
-echo "  3. cloudflared tunnel route dns social-scheduler sheduler.fichtmueller.org"
+echo "  3. cloudflared tunnel route dns social-scheduler scheduler.fichtmueller.org"
 echo "  4. Copy tunnel ID and run:"
 echo "     cloudflared tunnel --url http://localhost:8080 run social-scheduler"
 echo "═══════════════════════════════════════════════════"

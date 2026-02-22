@@ -46,7 +46,7 @@ export function DraggablePost({ post, canDrag }: DraggablePostProps) {
       style={style}
       className={`group text-xs px-1 py-0.5 rounded truncate flex items-center gap-0.5 ${
         POST_STATUS_COLORS[post.status as PostStatus]
-      } ${isDragging ? "opacity-30" : "hover:opacity-80"} ${
+      } ${isDragging ? "opacity-60" : "hover:opacity-80"} ${
         canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
       }`}
       {...listeners}

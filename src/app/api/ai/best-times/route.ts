@@ -1,4 +1,5 @@
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { withAuthAndRateLimit } from "@/lib/api-utils";
 import { getLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { getUserAIConfig, askAIStreaming } from "@/lib/ai/ai-provider";
@@ -7,16 +8,11 @@ import { BestTimesAnalysis } from "@/lib/ai/analyze";
 
 export const maxDuration = 600; // 10 minutes
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+export async function GET(request: NextRequest) {
+  const authResult = await withAuthAndRateLimit(request);
+  if (authResult instanceof NextResponse) return authResult;
 
-  const userId = session.user.id;
+  const userId = authResult.userId;
   const locale = await getLocale();
   const config = await getUserAIConfig(userId, "analysis");
 
@@ -26,7 +22,7 @@ export async function GET() {
 
   const analytics = await prisma.postAnalytics.findMany({
     where: {
-      post: { userId: session.user.id },
+      post: { userId },
       fetchedAt: { gte: ninetyDaysAgo },
     },
     include: {

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getAnthropicCredentials } from "@/lib/api-credentials";
+import { withAuthAndRateLimit } from "@/lib/api-utils";
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await withAuthAndRateLimit(request);
+  if (authResult instanceof NextResponse) return authResult;
 
   const { text, postId } = await request.json();
   if (!text) {
@@ -14,7 +13,7 @@ export async function POST(request: NextRequest) {
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: authResult.userId },
     select: { aiProvider: true, textModel: true, ollamaUrl: true },
   });
 
@@ -49,12 +48,13 @@ Respond with ONLY the JSON object, no markdown.`;
       const data = await res.json();
       result = data.response;
     } else {
-      // Claude API
+      // Claude API - use per-user key if available, fallback to global
+      const { apiKey } = await getAnthropicCredentials(authResult.userId);
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": process.env.ANTHROPIC_API_KEY || "",
+          "x-api-key": apiKey,
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({

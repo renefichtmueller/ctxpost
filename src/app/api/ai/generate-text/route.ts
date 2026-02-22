@@ -1,6 +1,6 @@
-import { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { getTranslations, getLocale } from "next-intl/server";
+import { withAuthAndRateLimit } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { getUserAIConfig, askAIStreaming } from "@/lib/ai/ai-provider";
 import { buildBrandAwareSystemPrompt } from "@/lib/ai/prompts";
@@ -72,17 +72,12 @@ Rules:
 Reply ONLY with the JSON, no additional explanations.`;
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
+  const authResult = await withAuthAndRateLimit(request);
+  if (authResult instanceof NextResponse) return authResult;
 
   const t = await getTranslations("ai");
   const locale = await getLocale();
-  const userId = session.user.id;
+  const userId = authResult.userId;
   let keywords: string;
   let tone: string;
   let platforms: string[];

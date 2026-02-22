@@ -21,6 +21,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Plus, UserPlus, Trash2, Shield, Users } from "lucide-react";
 import { createTeam, inviteMember, removeMember, updateMemberRole } from "@/actions/teams";
 import type { TeamRole } from "@prisma/client";
@@ -55,10 +61,14 @@ interface TeamManagerProps {
 
 const ROLE_COLORS: Record<TeamRole, string> = {
   OWNER: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-  ADMIN: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  EDITOR: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  ADMIN: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  EDITOR: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  REVIEWER: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
   VIEWER: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
 };
+
+/** Assignable roles (excludes OWNER) */
+const ASSIGNABLE_ROLES: TeamRole[] = ["ADMIN", "EDITOR", "REVIEWER", "VIEWER"];
 
 export function TeamManager({ initialTeams, currentUserId }: TeamManagerProps) {
   const t = useTranslations("team");
@@ -129,6 +139,7 @@ export function TeamManager({ initialTeams, currentUserId }: TeamManagerProps) {
               : team
           )
         );
+        toast.success(t("roleUpdated"));
       }
     });
   };
@@ -250,7 +261,7 @@ function TeamCard({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {isOwner && member.userId !== currentUserId ? (
+                {isOwner && member.userId !== currentUserId && member.role !== "OWNER" ? (
                   <Select
                     value={member.role}
                     onValueChange={(value) =>
@@ -258,22 +269,46 @@ function TeamCard({
                     }
                     disabled={isPending}
                   >
-                    <SelectTrigger className="w-[120px]">
+                    <SelectTrigger className="w-[140px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">{t("roles.admin")}</SelectItem>
-                      <SelectItem value="EDITOR">{t("roles.editor")}</SelectItem>
-                      <SelectItem value="VIEWER">{t("roles.viewer")}</SelectItem>
+                      {ASSIGNABLE_ROLES.map((role) => (
+                        <SelectItem key={role} value={role}>
+                          <span className="flex items-center gap-2">
+                            <span
+                              className={`inline-block h-2 w-2 rounded-full ${
+                                role === "ADMIN"
+                                  ? "bg-purple-500"
+                                  : role === "EDITOR"
+                                  ? "bg-blue-500"
+                                  : role === "REVIEWER"
+                                  ? "bg-orange-500"
+                                  : "bg-gray-500"
+                              }`}
+                            />
+                            {t(`roles.${role.toLowerCase()}`)}
+                          </span>
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 ) : (
-                  <Badge
-                    variant="secondary"
-                    className={ROLE_COLORS[member.role]}
-                  >
-                    {t(`roles.${member.role.toLowerCase()}`)}
-                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          variant="secondary"
+                          className={`cursor-default ${ROLE_COLORS[member.role]}`}
+                        >
+                          {t(`roles.${member.role.toLowerCase()}`)}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p>{t(`roleDesc.${member.role.toLowerCase()}`)}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
                 {canManageMembers &&
                   member.userId !== currentUserId &&
@@ -359,9 +394,29 @@ function InviteMemberDialog({
                 <SelectValue placeholder={t("selectRole")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ADMIN">{t("roles.admin")}</SelectItem>
-                <SelectItem value="EDITOR">{t("roles.editor")}</SelectItem>
-                <SelectItem value="VIEWER">{t("roles.viewer")}</SelectItem>
+                {ASSIGNABLE_ROLES.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    <div className="flex flex-col">
+                      <span className="flex items-center gap-2">
+                        <span
+                          className={`inline-block h-2 w-2 rounded-full ${
+                            r === "ADMIN"
+                              ? "bg-purple-500"
+                              : r === "EDITOR"
+                              ? "bg-blue-500"
+                              : r === "REVIEWER"
+                              ? "bg-orange-500"
+                              : "bg-gray-500"
+                          }`}
+                        />
+                        {t(`roles.${r.toLowerCase()}`)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {t(`roleDesc.${r.toLowerCase()}`)}
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

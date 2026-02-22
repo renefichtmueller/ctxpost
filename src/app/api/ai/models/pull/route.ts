@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     select: { ollamaUrl: true },
   });
 
-  const ollamaUrl = user?.ollamaUrl || "http://192.168.178.169:11434";
+  const ollamaUrl = user?.ollamaUrl || "http://localhost:11434";
 
   // Stream the pull progress via SSE
   const encoder = new TextEncoder();

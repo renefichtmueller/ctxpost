@@ -116,7 +116,7 @@ export function AIPerformanceCard({ operations }: AIPerformanceCardProps) {
               <Bot className="h-4 w-4 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <Badge className={`text-[10px] border-0 ${TYPE_COLORS[op.type] || "bg-muted"}`}>
+                  <Badge variant="outline" className={`text-[10px] border-0 ${TYPE_COLORS[op.type] || "bg-slate-500/15 text-slate-400"}`}>
                     {TYPE_LABELS[op.type] || op.type}
                   </Badge>
                   {op.modelUsed && (

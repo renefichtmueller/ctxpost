@@ -9,7 +9,7 @@ import { loginSchema } from "@/lib/validators";
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 24 * 60 * 60 }, // 24h expiry
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user }) {
@@ -40,14 +40,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email: parsed.data.email },
         });
 
-        if (!user || !user.hashedPassword) return null;
-
+        // Constant-time comparison: always run bcrypt even if user not found
+        const hash = user?.hashedPassword || "$2a$12$000000000000000000000000000000000000000000";
         const passwordMatch = await bcrypt.compare(
           parsed.data.password,
-          user.hashedPassword
+          hash
         );
 
-        if (!passwordMatch) return null;
+        if (!user || !user.hashedPassword || !passwordMatch) return null;
 
         return {
           id: user.id,

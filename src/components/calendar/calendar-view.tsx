@@ -11,6 +11,8 @@ import {
   isSameMonth,
   isSameDay,
   isToday,
+  isBefore,
+  startOfDay,
   addMonths,
   subMonths,
 } from "date-fns";
@@ -19,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { POST_STATUS_COLORS } from "@/lib/constants";
 import type { PostStatus } from "@prisma/client";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
@@ -55,7 +57,6 @@ export function CalendarView({ posts, locale = "en" }: CalendarViewProps) {
 
   const days = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  // Generate weekday headers from locale
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const day = new Date(calendarStart);
     day.setDate(calendarStart.getDate() + i);
@@ -69,35 +70,46 @@ export function CalendarView({ posts, locale = "en" }: CalendarViewProps) {
     });
   };
 
+  const today = startOfDay(new Date());
+
   return (
-    <Card>
+    <Card style={{ background: "#0d1424", border: "1px solid rgba(168, 85, 247, 0.15)" }}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+            style={{ color: "#94a3b8" }}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold" style={{ color: "#e2e8f0" }}>
             {format(currentMonth, "MMMM yyyy", { locale: dateLocale })}
           </h2>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+            style={{ color: "#94a3b8" }}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-7 gap-px bg-muted rounded-lg overflow-hidden">
+        <div
+          className="grid grid-cols-7 gap-px rounded-xl overflow-hidden"
+          style={{ background: "rgba(168, 85, 247, 0.08)" }}
+        >
           {weekDays.map((day, i) => (
             <div
               key={`header-${i}`}
-              className="bg-card p-2 text-center text-sm font-medium text-muted-foreground"
+              className="p-2 text-center text-xs font-semibold uppercase tracking-wider"
+              style={{
+                background: "#080e1a",
+                color: "rgba(168, 85, 247, 0.6)"
+              }}
             >
               {day}
             </div>
@@ -106,38 +118,63 @@ export function CalendarView({ posts, locale = "en" }: CalendarViewProps) {
           {days.map((day) => {
             const dayPosts = getPostsForDay(day);
             const inCurrentMonth = isSameMonth(day, currentMonth);
-            const today = isToday(day);
+            const isCurrentDay = isToday(day);
+            const isPast = !isCurrentDay && isBefore(day, today);
 
             return (
               <div
                 key={day.toISOString()}
-                className={`bg-card p-2 min-h-[80px] ${
-                  !inCurrentMonth ? "opacity-40" : ""
-                } ${today ? "ring-2 ring-primary ring-inset" : ""}`}
+                className="relative p-2 min-h-[80px] transition-colors"
+                style={{
+                  background: isCurrentDay
+                    ? "rgba(124, 58, 237, 0.12)"
+                    : isPast
+                    ? "rgba(6, 11, 20, 0.95)"
+                    : "rgba(13, 20, 36, 0.8)",
+                  opacity: !inCurrentMonth ? 0.3 : 1,
+                  outline: isCurrentDay ? "2px solid rgba(168, 85, 247, 0.4)" : "none",
+                  outlineOffset: "-1px",
+                }}
               >
+                {isPast && inCurrentMonth && (
+                  <>
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: "repeating-linear-gradient(-45deg, transparent, transparent 5px, rgba(239, 68, 68, 0.03) 5px, rgba(239, 68, 68, 0.03) 6px)"
+                      }}
+                    />
+                    {dayPosts.length === 0 && (
+                      <div className="absolute top-1.5 right-1.5 opacity-60">
+                        <X className="w-3 h-3" style={{ color: "#ef4444" }} />
+                      </div>
+                    )}
+                  </>
+                )}
+
                 <p
-                  className={`text-sm font-medium mb-1 ${
-                    today
-                      ? "text-primary font-bold"
-                      : "text-foreground"
-                  }`}
+                  className="text-sm font-semibold mb-1 relative z-10"
+                  style={{
+                    color: isCurrentDay ? "#a855f7" : isPast ? "#1e293b" : "#94a3b8",
+                  }}
                 >
                   {format(day, "d")}
                 </p>
-                <div className="space-y-1">
+
+                <div className="space-y-1 relative z-10">
                   {dayPosts.slice(0, 3).map((post) => (
                     <Link key={post.id} href={`/posts/${post.id}`}>
                       <div
-                        className={`text-xs px-1 py-0.5 rounded truncate cursor-pointer hover:opacity-80 ${
+                        className={`text-[10px] px-1.5 py-0.5 rounded truncate cursor-pointer hover:opacity-80 transition-opacity ${
                           POST_STATUS_COLORS[post.status as PostStatus]
                         }`}
                       >
-                        {post.content.substring(0, 20)}
+                        {post.content.substring(0, 18)}
                       </div>
                     </Link>
                   ))}
                   {dayPosts.length > 3 && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[10px]" style={{ color: "#a855f7" }}>
                       +{dayPosts.length - 3} {t("more")}
                     </p>
                   )}

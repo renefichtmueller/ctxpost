@@ -14,8 +14,15 @@ export const authConfig = {
         "/queue",
         "/analytics",
         "/ai-insights",
+        "/ai-models",
         "/accounts",
         "/settings",
+        "/library",
+        "/links",
+        "/ideas",
+        "/inbox",
+        "/team",
+        "/llm-learning",
       ];
       const isProtected = protectedPaths.some((path) =>
         nextUrl.pathname.startsWith(path)

@@ -14,7 +14,7 @@ type InstagramCredentials = {
   redirectUri: string;
 };
 
-export function getInstagramAuthUrl(creds?: InstagramCredentials): string {
+export function getInstagramAuthUrl(creds?: InstagramCredentials): { url: string; state: string } {
   const appId = creds?.appId || process.env.FACEBOOK_APP_ID!;
   const redirectUri = creds?.redirectUri || process.env.INSTAGRAM_REDIRECT_URI!;
 
@@ -27,7 +27,7 @@ export function getInstagramAuthUrl(creds?: InstagramCredentials): string {
     response_type: "code",
     state,
   });
-  return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params}`;
+  return { url: `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params}`, state };
 }
 
 export async function exchangeInstagramCode(code: string, creds?: InstagramCredentials) {

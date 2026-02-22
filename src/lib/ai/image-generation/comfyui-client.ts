@@ -32,6 +32,8 @@ export function buildTxt2ImgWorkflow(params: {
   cfgScale?: number;
   checkpoint?: string;
   seed?: number;
+  samplerName?: string;
+  scheduler?: string;
 }): Record<string, unknown> {
   const {
     prompt,
@@ -42,6 +44,8 @@ export function buildTxt2ImgWorkflow(params: {
     cfgScale = 7,
     checkpoint = "v1-5-pruned-emaonly.safetensors",
     seed = Math.floor(Math.random() * 2 ** 32),
+    samplerName = "dpmpp_2m",
+    scheduler = "karras",
   } = params;
 
   return {
@@ -79,8 +83,8 @@ export function buildTxt2ImgWorkflow(params: {
         seed,
         steps,
         cfg: cfgScale,
-        sampler_name: "dpmpp_2m",
-        scheduler: "karras",
+        sampler_name: samplerName,
+        scheduler: scheduler,
         denoise: 1,
         model: ["1", 0],
         positive: ["2", 0],
@@ -144,7 +148,7 @@ export async function waitForComfyUIResult(
   comfyuiUrl: string,
   promptId: string,
   onProgress?: () => void,
-  timeoutMs: number = 300000 // 5 minutes default
+  timeoutMs: number = 600000 // 10 minutes default
 ): Promise<{ filename: string; subfolder: string }> {
   const startTime = Date.now();
   const pollInterval = 2000; // Poll every 2 seconds
@@ -251,8 +255,29 @@ export async function getComfyUICheckpoints(comfyuiUrl: string): Promise<string[
 }
 
 /**
+ * Auto-detect the best settings for a given checkpoint.
+ * SD Turbo / SDXL Turbo need very few steps, cfg=1, and euler_ancestral sampler.
+ */
+function getCheckpointDefaults(checkpoint: string): {
+  steps: number;
+  cfgScale: number;
+  samplerName: string;
+  scheduler: string;
+} {
+  const name = checkpoint.toLowerCase();
+  if (name.includes("turbo") || name.includes("lightning") || name.includes("hyper")) {
+    return { steps: 4, cfgScale: 1, samplerName: "euler_ancestral", scheduler: "normal" };
+  }
+  if (name.includes("lcm")) {
+    return { steps: 8, cfgScale: 2, samplerName: "lcm", scheduler: "lcm" };
+  }
+  return { steps: 30, cfgScale: 7, samplerName: "dpmpp_2m", scheduler: "karras" };
+}
+
+/**
  * Complete txt2img generation with ComfyUI.
  * Handles the full flow: build workflow → submit → poll → download.
+ * Auto-selects the first available checkpoint if none is specified.
  */
 export async function generateImageWithComfyUI(
   comfyuiUrl: string,
@@ -264,10 +289,33 @@ export async function generateImageWithComfyUI(
     steps?: number;
     cfgScale?: number;
     checkpoint?: string;
+    samplerName?: string;
+    scheduler?: string;
   },
   onProgress?: () => void
 ): Promise<Buffer> {
   console.log(`[ComfyUI] Starting image generation: ${params.prompt.slice(0, 50)}...`);
+
+  // Auto-detect checkpoint if not specified
+  if (!params.checkpoint) {
+    const available = await getComfyUICheckpoints(comfyuiUrl);
+    if (available.length > 0) {
+      params.checkpoint = available[0];
+      console.log(`[ComfyUI] Auto-selected checkpoint: ${params.checkpoint}`);
+    }
+  }
+
+  // Auto-apply optimal settings for turbo/fast models (steps, cfg, sampler)
+  if (params.checkpoint && !params.steps && !params.cfgScale) {
+    const defaults = getCheckpointDefaults(params.checkpoint);
+    params.steps = defaults.steps;
+    params.cfgScale = defaults.cfgScale;
+    params.samplerName = params.samplerName ?? defaults.samplerName;
+    params.scheduler = params.scheduler ?? defaults.scheduler;
+    console.log(
+      `[ComfyUI] Auto-settings for ${params.checkpoint}: steps=${params.steps}, cfg=${params.cfgScale}, sampler=${params.samplerName}`
+    );
+  }
 
   // Build workflow
   const workflow = buildTxt2ImgWorkflow(params);

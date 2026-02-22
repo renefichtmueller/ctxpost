@@ -19,6 +19,8 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  ExternalLink,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -80,7 +82,7 @@ export function ApiCredentialsForm() {
   });
   const [copiedUri, setCopiedUri] = useState<Platform | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [origin, setOrigin] = useState("https://sheduler.fichtmueller.org");
+  const [origin, setOrigin] = useState("http://localhost:3000");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -176,6 +178,29 @@ export function ApiCredentialsForm() {
       hasRedirectUri: false,
     },
   ];
+
+  const platformGuides: Record<Platform, { link: string; guideKey: string }> = {
+    facebook: {
+      link: "https://developers.facebook.com/apps/",
+      guideKey: "facebookGuide",
+    },
+    linkedin: {
+      link: "https://www.linkedin.com/developers/apps/",
+      guideKey: "linkedinGuide",
+    },
+    twitter: {
+      link: "https://developer.x.com/en/portal/projects-and-apps",
+      guideKey: "twitterGuide",
+    },
+    threads: {
+      link: "https://developers.facebook.com/apps/",
+      guideKey: "threadsGuide",
+    },
+    anthropic: {
+      link: "https://console.anthropic.com/settings/keys",
+      guideKey: "anthropicGuide",
+    },
+  };
 
   const togglePlatform = (platform: Platform) => {
     setOpenPlatforms((prev) => {
@@ -343,6 +368,30 @@ export function ApiCredentialsForm() {
 
                 <CollapsiblePrimitive.Content>
                   <div className="border-t px-4 pb-4 pt-4 space-y-4">
+                    {/* Setup Guide Info Box */}
+                    {platformGuides[platform.key] && (
+                      <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-md px-3 py-2.5 space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <Info className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+                          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                            {t("setupGuide")}
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-600 dark:text-blue-400 leading-relaxed">
+                          {t(platformGuides[platform.key].guideKey)}
+                        </p>
+                        <a
+                          href={platformGuides[platform.key].link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-blue-700 dark:text-blue-300 hover:text-blue-900 dark:hover:text-blue-100 font-medium transition-colors"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          {t("setupLink")}
+                        </a>
+                      </div>
+                    )}
+
                     {/* Instagram hint for Facebook section */}
                     {platform.key === "facebook" && (
                       <p className="text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">

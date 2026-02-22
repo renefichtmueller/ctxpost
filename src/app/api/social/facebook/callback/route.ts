@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { exchangeFacebookCode } from "@/lib/social/facebook";
 import { getCredentialsForPlatform } from "@/lib/api-credentials";
+import { encrypt } from "@/lib/crypto";
+
+function encryptToken(token: string): string {
+  if (!process.env.ENCRYPTION_KEY) return token;
+  try { return encrypt(token); } catch { return token; }
+}
 
 function getBaseUrl(): string {
   return process.env.NEXTAUTH_URL || process.env.AUTH_URL || "http://localhost:3000";
@@ -23,6 +30,17 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Validate CSRF state parameter
+  const state = request.nextUrl.searchParams.get("state");
+  const cookieStore = await cookies();
+  const storedState = cookieStore.get("facebook_oauth_state")?.value;
+  if (!state || state !== storedState) {
+    console.error("[Facebook OAuth] State mismatch detected");
+    return NextResponse.redirect(
+      new URL("/accounts?error=facebook_state_mismatch", baseUrl)
+    );
+  }
+
   try {
     const creds = await getCredentialsForPlatform(session.user.id, "facebook");
     const { profile, userToken, tokenExpiresAt, pages } = await exchangeFacebookCode(code, creds);
@@ -37,7 +55,7 @@ export async function GET(request: NextRequest) {
         },
       },
       update: {
-        accessToken: userToken,
+        accessToken: encryptToken(userToken),
         tokenExpiresAt,
         accountName: profile.name,
         avatarUrl: profile.picture,
@@ -49,7 +67,7 @@ export async function GET(request: NextRequest) {
         platformUserId: profile.id,
         accountName: profile.name,
         accountType: "profile",
-        accessToken: userToken,
+        accessToken: encryptToken(userToken),
         tokenExpiresAt,
         avatarUrl: profile.picture,
       },
@@ -69,7 +87,7 @@ export async function GET(request: NextRequest) {
           },
         },
         update: {
-          accessToken: page.accessToken,
+          accessToken: encryptToken(page.accessToken),
           accountName: `📄 ${page.name}`,
           avatarUrl: page.avatarUrl,
           followerCount: page.followerCount,
@@ -82,7 +100,7 @@ export async function GET(request: NextRequest) {
           platformUserId: page.id,
           accountName: `📄 ${page.name}`,
           accountType: "page",
-          accessToken: page.accessToken,
+          accessToken: encryptToken(page.accessToken),
           avatarUrl: page.avatarUrl,
           followerCount: page.followerCount,
           parentAccountId: profileAccount.id,
@@ -91,9 +109,11 @@ export async function GET(request: NextRequest) {
       console.log(`[Facebook OAuth] Page account saved: ${pageAccount.id} (${page.name})`);
     }
 
-    return NextResponse.redirect(
+    const response = NextResponse.redirect(
       new URL("/accounts?success=facebook", baseUrl)
     );
+    response.cookies.delete("facebook_oauth_state");
+    return response;
   } catch (error) {
     console.error("[Facebook OAuth] Error:", error);
     return NextResponse.redirect(

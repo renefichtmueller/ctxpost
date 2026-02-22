@@ -9,8 +9,15 @@ export const registerSchema = z
   .object({
     name: z.string().min(2, "nameMinLength"),
     email: z.string().email("invalidEmail"),
-    password: z.string().min(8, "passwordMinLength"),
+    password: z
+      .string()
+      .min(8, "passwordMinLength")
+      .regex(/[A-Z]/, "passwordUppercase")
+      .regex(/[a-z]/, "passwordLowercase")
+      .regex(/[0-9]/, "passwordNumber")
+      .regex(/[^A-Za-z0-9]/, "passwordSpecial"),
     confirmPassword: z.string(),
+    privacyConsent: z.literal("on", { message: "consentRequired" }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "passwordsMismatch",

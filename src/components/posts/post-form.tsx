@@ -7,23 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { PLATFORMS } from "@/lib/constants";
 import type { Platform } from "@prisma/client";
-import { AlertCircle, Send, Sparkles, Loader2, Clock } from "lucide-react";
+import {
+  AlertCircle,
+  Send,
+  Sparkles,
+  Loader2,
+  Clock,
+  Image as ImageIcon,
+  Upload,
+  ChevronDown,
+  ChevronUp,
+  Wand2,
+  MessageSquare,
+  Calendar,
+  Zap,
+  Hash,
+} from "lucide-react";
 import Link from "next/link";
 import { AIToolbar } from "./ai-toolbar";
 import { ImageGenerator } from "./image-generator";
 import { PostPreview } from "./post-preview";
 import { MediaUpload } from "./media-upload";
 import { TextGenerator } from "./text-generator";
+import { AISuggestions } from "./ai-suggestions";
 
 interface PostFormProps {
   socialAccounts: Array<{
@@ -38,6 +46,7 @@ interface PostFormProps {
     color: string;
     icon?: string | null;
   }>;
+  initialContent?: string;
   post?: {
     id: string;
     content: string;
@@ -53,7 +62,6 @@ interface PostFormProps {
   };
 }
 
-// Platform-specific character limits
 const PLATFORM_LIMITS: Record<string, { name: string; limit: number }> = {
   FACEBOOK: { name: "Facebook", limit: 63206 },
   LINKEDIN: { name: "LinkedIn", limit: 3000 },
@@ -61,11 +69,11 @@ const PLATFORM_LIMITS: Record<string, { name: string; limit: number }> = {
   TWITTER: { name: "X/Twitter", limit: 280 },
 };
 
-export function PostForm({ socialAccounts, categories, post }: PostFormProps) {
+export function PostForm({ socialAccounts, categories, initialContent, post }: PostFormProps) {
   const t = useTranslations("posts");
   const tCommon = useTranslations("common");
 
-  const [content, setContent] = useState(post?.content || "");
+  const [content, setContent] = useState(post?.content || initialContent || "");
   const [imageUrl, setImageUrl] = useState<string | null>(post?.imageUrl || null);
   const [imageDescription, setImageDescription] = useState(post?.imageDescription || "");
   const [mediaUrls, setMediaUrls] = useState<string[]>(post?.mediaUrls || []);
@@ -80,11 +88,17 @@ export function PostForm({ socialAccounts, categories, post }: PostFormProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>(post?.categoryId || "");
   const [isEvergreen, setIsEvergreen] = useState(post?.isEvergreen || false);
   const [firstComment, setFirstComment] = useState(post?.firstComment || "");
-  const maxLength = 5000;
 
+  // Collapsible sections
+  const [showAiTools, setShowAiTools] = useState(false);
+  const [showImageGen, setShowImageGen] = useState(false);
+  const [showMediaUpload, setShowMediaUpload] = useState(false);
+  const [showFirstComment, setShowFirstComment] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(!post);
+
+  const maxLength = 5000;
   const isEditing = !!post;
 
-  // Get selected platforms for AI features
   const selectedPlatforms = useMemo(() => {
     return socialAccounts
       .filter((a) => selectedAccounts.has(a.id))
@@ -121,24 +135,22 @@ export function PostForm({ socialAccounts, categories, post }: PostFormProps) {
 
   if (socialAccounts.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8">
-          <div className="text-center space-y-4">
-            <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground" />
-            <div>
-              <h3 className="text-lg font-semibold">
-                {t("noAccountsTitle")}
-              </h3>
-              <p className="text-muted-foreground">
-                {t("noAccountsDesc")}
-              </p>
-            </div>
-            <Link href="/accounts">
-              <Button>{t("connectAccounts")}</Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+      <div
+        className="rounded-2xl p-10 text-center"
+        style={{ background: "#0d1424", border: "1px solid rgba(168,85,247,0.2)" }}
+      >
+        <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-40 text-white" />
+        <h3 className="text-lg font-semibold text-white mb-2">{t("noAccountsTitle")}</h3>
+        <p style={{ color: "#94a3b8" }}>{t("noAccountsDesc")}</p>
+        <Link href="/accounts">
+          <Button
+            className="mt-4"
+            style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)", border: "none" }}
+          >
+            {t("connectAccounts")}
+          </Button>
+        </Link>
+      </div>
     );
   }
 
@@ -146,7 +158,6 @@ export function PostForm({ socialAccounts, categories, post }: PostFormProps) {
     ? new Date(post.scheduledAt).toISOString().slice(0, 16)
     : "";
 
-  // Calculate platform-specific lengths
   const platformWarnings = selectedPlatforms
     .filter((p) => PLATFORM_LIMITS[p] && content.length > PLATFORM_LIMITS[p].limit)
     .map((p) => ({
@@ -155,110 +166,313 @@ export function PostForm({ socialAccounts, categories, post }: PostFormProps) {
       over: content.length - PLATFORM_LIMITS[p].limit,
     }));
 
+  const hasMedia = mediaUrls.length > 0 || imageUrl;
+
   return (
-    <form action={handleSubmit} className="space-y-6">
+    <form action={handleSubmit}>
+      {/* Error */}
       {error && (
-        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg flex items-center gap-2">
-          <AlertCircle className="h-4 w-4" />
+        <div
+          className="flex items-center gap-2 px-4 py-3 rounded-xl mb-4 text-sm"
+          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171" }}
+        >
+          <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("content")}</CardTitle>
-          <CardDescription>
-            {t("contentDesc")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <Textarea
-              name="content"
-              placeholder={t("contentPlaceholder")}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              maxLength={maxLength}
-              rows={6}
-              className="resize-none"
-              required
-            />
+      {/* ── 2-COLUMN LAYOUT ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
 
-            {/* Character Counter with Platform Limits */}
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap gap-2">
-                {selectedPlatforms.map((p) => {
-                  const info = PLATFORM_LIMITS[p];
-                  if (!info) return null;
-                  const pct = (content.length / info.limit) * 100;
-                  const isOver = content.length > info.limit;
-                  return (
-                    <span
-                      key={p}
-                      className={`text-xs ${
-                        isOver
-                          ? "text-destructive font-medium"
-                          : pct > 90
-                            ? "text-orange-500"
-                            : "text-muted-foreground"
-                      }`}
-                    >
-                      {info.name}: {content.length}/{info.limit}
-                    </span>
-                  );
-                })}
-              </div>
-              <span
-                className={`text-xs ${
-                  content.length > maxLength * 0.9
-                    ? "text-destructive"
-                    : "text-muted-foreground"
-                }`}
+        {/* ── LEFT COLUMN (2/3): Content + Media + AI ── */}
+        <div className="xl:col-span-2 space-y-4">
+
+          {/* AI Content Suggestions (collapsible, open by default for new posts) */}
+          {!isEditing && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowSuggestions(!showSuggestions)}
+                className="flex items-center gap-2 text-xs font-medium mb-2 transition-colors"
+                style={{ color: showSuggestions ? "#a855f7" : "#64748b" }}
               >
-                {content.length} / {maxLength}
-              </span>
+                <Zap className="h-3.5 w-3.5" />
+                Content Suggestions & Inspiration
+                {showSuggestions
+                  ? <ChevronUp className="h-3.5 w-3.5 ml-1" />
+                  : <ChevronDown className="h-3.5 w-3.5 ml-1" />
+                }
+              </button>
+              {showSuggestions && (
+                <AISuggestions onSelectTopic={(topic) => setContent(topic)} />
+              )}
+            </div>
+          )}
+
+          {/* ── MAIN CONTENT CARD ── */}
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ background: "#0d1424", border: "1px solid rgba(168,85,247,0.2)" }}
+          >
+            {/* Header */}
+            <div
+              className="px-5 py-3.5 flex items-center gap-2"
+              style={{ borderBottom: "1px solid rgba(168,85,247,0.1)" }}
+            >
+              <MessageSquare className="h-4 w-4" style={{ color: "#a855f7" }} />
+              <span className="font-semibold text-sm text-white">{t("content")}</span>
+              {content.length > 0 && (
+                <span className="ml-auto text-xs" style={{ color: "#94a3b8" }}>
+                  {content.length} Zeichen
+                </span>
+              )}
             </div>
 
-            {/* Platform Length Warnings */}
-            {platformWarnings.length > 0 && (
-              <div className="text-xs text-orange-600 bg-orange-50 dark:bg-orange-950/30 px-3 py-2 rounded-md">
-                {platformWarnings.map((w) => (
-                  <div key={w.platform}>
-                    {t("charsOverLimit", { platform: w.platform, over: w.over, limit: w.limit })}
-                  </div>
+            <div className="p-5 space-y-3">
+              {/* Text area — THE MAIN ELEMENT */}
+              <Textarea
+                name="content"
+                placeholder="Was möchtest du mitteilen? Schreibe deinen Post-Text hier..."
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                maxLength={maxLength}
+                rows={8}
+                className="resize-none text-base"
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(168,85,247,0.15)",
+                  color: "#e2e8f0",
+                  borderRadius: "12px",
+                }}
+                required
+              />
+
+              {/* Platform char limits */}
+              {selectedPlatforms.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {selectedPlatforms.map((p) => {
+                    const info = PLATFORM_LIMITS[p];
+                    if (!info) return null;
+                    const pct = Math.min((content.length / info.limit) * 100, 100);
+                    const isOver = content.length > info.limit;
+                    const isNear = pct > 90;
+                    return (
+                      <span
+                        key={p}
+                        className="text-xs px-2 py-0.5 rounded-full font-medium"
+                        style={{
+                          background: isOver
+                            ? "rgba(239,68,68,0.1)"
+                            : isNear
+                              ? "rgba(251,146,60,0.1)"
+                              : "rgba(255,255,255,0.05)",
+                          color: isOver ? "#f87171" : isNear ? "#fb923c" : "#64748b",
+                          border: `1px solid ${isOver ? "rgba(239,68,68,0.2)" : isNear ? "rgba(251,146,60,0.2)" : "rgba(255,255,255,0.06)"}`,
+                        }}
+                      >
+                        {info.name}: {content.length}/{info.limit}
+                        {isOver && " ⚠️"}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+
+              {platformWarnings.length > 0 && (
+                <div className="text-xs px-3 py-2 rounded-lg" style={{ background: "rgba(251,146,60,0.08)", color: "#fb923c", border: "1px solid rgba(251,146,60,0.2)" }}>
+                  {platformWarnings.map((w) => (
+                    <div key={w.platform}>
+                      {t("charsOverLimit", { platform: w.platform, over: w.over, limit: w.limit })}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* AI Toolbar (Hashtags, Emojis, Variations, etc.) */}
+              <AIToolbar
+                content={content}
+                platforms={selectedPlatforms}
+                onContentChange={setContent}
+                onInsertHashtags={handleInsertHashtags}
+              />
+            </div>
+          </div>
+
+          {/* ── MEDIA TOOLBAR (Bilder hochladen + AI-Bild + Kommentar) ── */}
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ background: "#0d1424", border: "1px solid rgba(168,85,247,0.15)" }}
+          >
+            {/* Media action buttons */}
+            <div className="flex items-center gap-1 px-4 py-3" style={{ borderBottom: "1px solid rgba(168,85,247,0.08)" }}>
+              <span className="text-xs font-medium mr-2" style={{ color: "#94a3b8" }}>Anhängen:</span>
+
+              <button
+                type="button"
+                onClick={() => { setShowMediaUpload(!showMediaUpload); setShowImageGen(false); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={showMediaUpload
+                  ? { background: "rgba(34,211,238,0.15)", color: "#22d3ee", border: "1px solid rgba(34,211,238,0.3)" }
+                  : { background: "rgba(255,255,255,0.03)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.06)" }
+                }
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Bild / Video hochladen
+                {mediaUrls.length > 0 && (
+                  <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px]"
+                    style={{ background: "rgba(34,211,238,0.2)", color: "#22d3ee" }}>
+                    {mediaUrls.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setShowImageGen(!showImageGen); setShowMediaUpload(false); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={showImageGen
+                  ? { background: "rgba(168,85,247,0.15)", color: "#a855f7", border: "1px solid rgba(168,85,247,0.3)" }
+                  : { background: "rgba(255,255,255,0.03)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.06)" }
+                }
+              >
+                <ImageIcon className="h-3.5 w-3.5" />
+                AI-Bild generieren
+                {imageUrl && (
+                  <span className="ml-1 w-2 h-2 rounded-full" style={{ background: "#a855f7" }} />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowFirstComment(!showFirstComment)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={showFirstComment
+                  ? { background: "rgba(52,211,153,0.15)", color: "#34d399", border: "1px solid rgba(52,211,153,0.3)" }
+                  : { background: "rgba(255,255,255,0.03)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.06)" }
+                }
+              >
+                <Hash className="h-3.5 w-3.5" />
+                Erster Kommentar
+                {firstComment && (
+                  <span className="ml-1 w-2 h-2 rounded-full" style={{ background: "#34d399" }} />
+                )}
+              </button>
+            </div>
+
+            {/* Media Upload Panel */}
+            {showMediaUpload && (
+              <div className="p-4" style={{ borderBottom: "1px solid rgba(168,85,247,0.08)" }}>
+                <MediaUpload
+                  mediaUrls={mediaUrls}
+                  onMediaUrlsChange={setMediaUrls}
+                />
+                {mediaUrls.map((url, i) => (
+                  <input key={i} type="hidden" name="mediaUrls" value={url} />
                 ))}
               </div>
             )}
 
-            {/* AI Toolbar */}
-            <AIToolbar
-              content={content}
-              platforms={selectedPlatforms}
-              onContentChange={setContent}
-              onInsertHashtags={handleInsertHashtags}
-            />
-          </div>
-        </CardContent>
-      </Card>
+            {/* Image Generator Panel */}
+            {showImageGen && (
+              <div className="p-4" style={{ borderBottom: "1px solid rgba(168,85,247,0.08)" }}>
+                <ImageGenerator
+                  imageDescription={imageDescription}
+                  onImageDescriptionChange={setImageDescription}
+                  imageUrl={imageUrl}
+                  onImageUrlChange={setImageUrl}
+                  content={content}
+                  platforms={selectedPlatforms}
+                />
+              </div>
+            )}
 
-      {/* Content Category */}
-      {categories && categories.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("category")}</CardTitle>
-            <CardDescription>{t("categoryDesc")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
+            {/* First Comment Panel */}
+            {showFirstComment && (
+              <div className="p-4">
+                <p className="text-xs font-medium text-white mb-2">{t("firstComment")}</p>
+                <p className="text-xs mb-3" style={{ color: "#94a3b8" }}>{t("firstCommentDesc")}</p>
+                <Textarea
+                  name="firstComment"
+                  placeholder={t("firstCommentPlaceholder")}
+                  value={firstComment}
+                  onChange={(e) => setFirstComment(e.target.value)}
+                  rows={3}
+                  className="resize-none text-sm"
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(52,211,153,0.2)",
+                    color: "#e2e8f0",
+                    borderRadius: "10px",
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Media indicator strip (always visible when has media) */}
+            {!showMediaUpload && !showImageGen && (mediaUrls.length > 0 || imageUrl) && (
+              <div className="px-4 py-2 flex items-center gap-2">
+                {imageUrl && (
+                  <span className="text-xs px-2 py-1 rounded-lg flex items-center gap-1"
+                    style={{ background: "rgba(168,85,247,0.1)", color: "#a855f7", border: "1px solid rgba(168,85,247,0.2)" }}>
+                    <ImageIcon className="h-3 w-3" /> AI-Bild angehängt
+                  </span>
+                )}
+                {mediaUrls.length > 0 && (
+                  <span className="text-xs px-2 py-1 rounded-lg flex items-center gap-1"
+                    style={{ background: "rgba(34,211,238,0.1)", color: "#22d3ee", border: "1px solid rgba(34,211,238,0.2)" }}>
+                    <Upload className="h-3 w-3" /> {mediaUrls.length} Datei{mediaUrls.length > 1 ? "en" : ""} angehängt
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── AI TEXT GENERATOR (collapsible) ── */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowAiTools(!showAiTools)}
+              className="flex items-center gap-2 text-xs font-medium mb-2 transition-colors w-full"
+              style={{
+                color: "#94a3b8",
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.05)",
+                borderRadius: "12px",
+                padding: "10px 14px",
+              }}
+            >
+              <Wand2 className="h-3.5 w-3.5" style={{ color: "#a855f7" }} />
+              <span style={{ color: "#a855f7" }}>KI-Textgenerator</span>
+              <span style={{ color: "#8899aa" }}>— Generiere einen komplett neuen Post-Text per KI</span>
+              {showAiTools
+                ? <ChevronUp className="h-3.5 w-3.5 ml-auto" />
+                : <ChevronDown className="h-3.5 w-3.5 ml-auto" />
+              }
+            </button>
+            {showAiTools && (
+              <TextGenerator
+                onContentGenerated={(text) => setContent(text)}
+                platforms={selectedPlatforms}
+              />
+            )}
+          </div>
+
+          {/* ── CATEGORY ── */}
+          {categories && categories.length > 0 && (
+            <div
+              className="rounded-2xl p-4 space-y-3"
+              style={{ background: "#0d1424", border: "1px solid rgba(168,85,247,0.12)" }}
+            >
+              <p className="text-sm font-semibold text-white">{t("category")}</p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedCategory("")}
-                  className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                    !selectedCategory
-                      ? "border-primary bg-primary/10 font-medium"
-                      : "border-muted hover:border-muted-foreground/30"
-                  }`}
+                  className="px-3 py-1.5 rounded-full text-xs transition-all"
+                  style={!selectedCategory
+                    ? { background: "rgba(168,85,247,0.15)", color: "#a855f7", border: "1px solid rgba(168,85,247,0.3)" }
+                    : { background: "rgba(255,255,255,0.03)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.06)" }
+                  }
                 >
                   {t("noCategory")}
                 </button>
@@ -267,15 +481,11 @@ export function PostForm({ socialAccounts, categories, post }: PostFormProps) {
                     key={cat.id}
                     type="button"
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-3 py-1.5 rounded-full text-sm border transition-colors flex items-center gap-1.5 ${
-                      selectedCategory === cat.id
-                        ? "font-medium"
-                        : "hover:border-muted-foreground/30"
-                    }`}
+                    className="px-3 py-1.5 rounded-full text-xs transition-all flex items-center gap-1"
                     style={{
-                      borderColor: selectedCategory === cat.id ? cat.color : undefined,
-                      backgroundColor: selectedCategory === cat.id ? `${cat.color}15` : undefined,
-                      color: selectedCategory === cat.id ? cat.color : undefined,
+                      background: selectedCategory === cat.id ? `${cat.color}18` : "rgba(255,255,255,0.03)",
+                      color: selectedCategory === cat.id ? cat.color : "#64748b",
+                      border: `1px solid ${selectedCategory === cat.id ? `${cat.color}40` : "rgba(255,255,255,0.06)"}`,
                     }}
                   >
                     {cat.icon && <span>{cat.icon}</span>}
@@ -285,7 +495,6 @@ export function PostForm({ socialAccounts, categories, post }: PostFormProps) {
               </div>
               <input type="hidden" name="categoryId" value={selectedCategory} />
 
-              {/* Evergreen Toggle */}
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -293,256 +502,110 @@ export function PostForm({ socialAccounts, categories, post }: PostFormProps) {
                   value="true"
                   checked={isEvergreen}
                   onChange={(e) => setIsEvergreen(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="h-4 w-4 rounded"
+                  style={{ accentColor: "#a855f7" }}
                 />
                 <div>
-                  <span className="text-sm font-medium">{t("evergreen")}</span>
-                  <p className="text-xs text-muted-foreground">{t("evergreenDesc")}</p>
+                  <span className="text-sm font-medium text-white">{t("evergreen")}</span>
+                  <p className="text-xs" style={{ color: "#94a3b8" }}>{t("evergreenDesc")}</p>
                 </div>
               </label>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
 
-      {/* AI Text Generator */}
-      <TextGenerator
-        onContentGenerated={(text) => setContent(text)}
-        platforms={selectedPlatforms}
-      />
-
-      {/* Media Upload */}
-      <MediaUpload
-        mediaUrls={mediaUrls}
-        onMediaUrlsChange={setMediaUrls}
-      />
-      {/* Hidden inputs for mediaUrls */}
-      {mediaUrls.map((url, i) => (
-        <input key={i} type="hidden" name="mediaUrls" value={url} />
-      ))}
-
-      {/* First Comment */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("firstComment")}</CardTitle>
-          <CardDescription>{t("firstCommentDesc")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            name="firstComment"
-            placeholder={t("firstCommentPlaceholder")}
-            value={firstComment}
-            onChange={(e) => setFirstComment(e.target.value)}
-            rows={3}
-            className="resize-none"
-          />
-        </CardContent>
-      </Card>
-
-      {/* Image Generator */}
-      <ImageGenerator
-        imageDescription={imageDescription}
-        onImageDescriptionChange={setImageDescription}
-        imageUrl={imageUrl}
-        onImageUrlChange={setImageUrl}
-        content={content}
-        platforms={selectedPlatforms}
-      />
-
-      {/* Post Preview */}
-      {content.trim() && selectedPlatforms.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <PostPreview
-              content={content}
-              imageUrl={imageUrl}
-              platforms={selectedPlatforms}
-              accountName={
-                socialAccounts.find((a) => selectedAccounts.has(a.id))?.accountName || tCommon("myAccount")
-              }
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("schedule")}</CardTitle>
-          <CardDescription>
-            {t("scheduleDesc")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Schedule Mode Selection */}
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setScheduleMode("custom")}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm transition-colors ${
-                  scheduleMode === "custom"
-                    ? "border-primary bg-primary/5 font-medium"
-                    : "border-muted hover:border-muted-foreground/30"
-                }`}
-              >
-                <Clock className="h-4 w-4" />
-                {t("customTime")}
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  setScheduleMode("bestTime");
-                  if (selectedPlatforms.length > 0 && !suggestedTime) {
-                    setIsFetchingBestTime(true);
-                    try {
-                      const res = await fetch("/api/scheduling/suggest-time", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ platforms: selectedPlatforms }),
-                      });
-                      if (res.ok) {
-                        const data = await res.json();
-                        setSuggestedTime(new Date(data.suggestedTime).toISOString().slice(0, 16));
-                        setSuggestedReason(data.reason);
-                      }
-                    } catch {
-                      // Fallback will be used
-                    } finally {
-                      setIsFetchingBestTime(false);
-                    }
-                  }
-                }}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm transition-colors ${
-                  scheduleMode === "bestTime"
-                    ? "border-primary bg-primary/5 font-medium"
-                    : "border-muted hover:border-muted-foreground/30"
-                }`}
-              >
-                <Sparkles className="h-4 w-4" />
-                {t("bestTime")}
-              </button>
-            </div>
-
-            {/* Custom Time Input */}
-            {scheduleMode === "custom" && (
-              <div className="space-y-2">
-                <Label htmlFor="scheduledAt">{t("dateTime")}</Label>
-                <Input
-                  type="datetime-local"
-                  id="scheduledAt"
-                  name="scheduledAt"
-                  defaultValue={defaultScheduledAt}
-                />
-              </div>
-            )}
-
-            {/* Best Time Suggestion */}
-            {scheduleMode === "bestTime" && (
-              <div className="space-y-3">
-                {isFetchingBestTime ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 border rounded-lg">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {t("calculatingBestTime")}
-                  </div>
-                ) : suggestedTime ? (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-3 border rounded-lg bg-primary/5 border-primary/30">
-                      <Sparkles className="h-4 w-4 text-primary" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{t("suggestedTime")}</p>
-                        <p className="text-xs text-muted-foreground">{suggestedReason}</p>
-                      </div>
-                    </div>
-                    <input type="hidden" name="scheduledAt" value={suggestedTime} />
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="datetime-local"
-                        value={suggestedTime}
-                        onChange={(e) => setSuggestedTime(e.target.value)}
-                        className="flex-1"
-                      />
-                      <p className="text-xs text-muted-foreground">{t("adjustIfNeeded")}</p>
-                    </div>
-                  </div>
-                ) : selectedPlatforms.length === 0 ? (
-                  <p className="text-sm text-muted-foreground p-3 border rounded-lg">
-                    {t("selectPlatformsFirst")}
-                  </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground p-3 border rounded-lg">
-                    {t("noBestTimeAvailable")}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("platforms")}</CardTitle>
-          <CardDescription>
-            {t("platformsDesc")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Group accounts by platform */}
-            {Object.entries(
-              socialAccounts.reduce<Record<string, typeof socialAccounts>>((groups, account) => {
-                const key = account.platform;
-                if (!groups[key]) groups[key] = [];
-                groups[key].push(account);
-                return groups;
-              }, {})
-            ).map(([platformKey, accounts]) => {
-              const platform = PLATFORMS[platformKey as Platform];
-              const allSelected = accounts.every((a) => selectedAccounts.has(a.id));
-              const someSelected = accounts.some((a) => selectedAccounts.has(a.id));
-
-              const togglePlatform = () => {
-                const next = new Set(selectedAccounts);
-                if (allSelected) {
-                  accounts.forEach((a) => next.delete(a.id));
-                } else {
-                  accounts.forEach((a) => next.add(a.id));
+          {/* ── LIVE PREVIEW ── */}
+          {content.trim() && selectedPlatforms.length > 0 && (
+            <div
+              className="rounded-2xl p-4"
+              style={{ background: "#0d1424", border: "1px solid rgba(34,211,238,0.15)" }}
+            >
+              <p className="text-xs font-semibold mb-3 flex items-center gap-1.5" style={{ color: "#22d3ee" }}>
+                <Sparkles className="h-3.5 w-3.5" />
+                Live Preview
+              </p>
+              <PostPreview
+                content={content}
+                imageUrl={imageUrl}
+                platforms={selectedPlatforms}
+                accountName={
+                  socialAccounts.find((a) => selectedAccounts.has(a.id))?.accountName || tCommon("myAccount")
                 }
-                setSelectedAccounts(next);
-              };
+              />
+            </div>
+          )}
+        </div>
 
-              return (
-                <div key={platformKey} className="space-y-2">
-                  {/* Platform header with select all */}
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="secondary"
-                      className="font-medium"
-                      style={{
-                        backgroundColor: platform?.color ? `${platform.color}20` : undefined,
-                        color: platform?.color,
-                      }}
-                    >
-                      {platform?.name || platformKey}
-                    </Badge>
-                    {accounts.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={togglePlatform}
-                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+        {/* ── RIGHT COLUMN (1/3): Platforms + Schedule + Status + Submit ── */}
+        <div className="space-y-4">
+
+          {/* PLATFORMS */}
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ background: "#0d1424", border: "1px solid rgba(168,85,247,0.2)" }}
+          >
+            <div className="px-4 py-3.5 flex items-center gap-2" style={{ borderBottom: "1px solid rgba(168,85,247,0.1)" }}>
+              <Zap className="h-4 w-4" style={{ color: "#a855f7" }} />
+              <span className="font-semibold text-sm text-white">{t("platforms")}</span>
+              {selectedAccounts.size > 0 && (
+                <span className="ml-auto text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7" }}>
+                  {selectedAccounts.size} gewählt
+                </span>
+              )}
+            </div>
+            <div className="p-4 space-y-3">
+              {Object.entries(
+                socialAccounts.reduce<Record<string, typeof socialAccounts>>((groups, account) => {
+                  const key = account.platform;
+                  if (!groups[key]) groups[key] = [];
+                  groups[key].push(account);
+                  return groups;
+                }, {})
+              ).map(([platformKey, accounts]) => {
+                const platform = PLATFORMS[platformKey as Platform];
+                const allSelected = accounts.every((a) => selectedAccounts.has(a.id));
+
+                return (
+                  <div key={platformKey} className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-xs font-bold px-2 py-0.5 rounded"
+                        style={{
+                          background: platform?.color ? `${platform.color}15` : "rgba(168,85,247,0.1)",
+                          color: platform?.color || "#a855f7",
+                        }}
                       >
-                        {allSelected ? t("deselectAll") : t("selectAllPlatform")}
-                      </button>
-                    )}
-                  </div>
-                  {/* Accounts within platform */}
-                  <div className="space-y-1 ml-2">
+                        {platform?.name || platformKey}
+                      </span>
+                      {accounts.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const next = new Set(selectedAccounts);
+                            if (allSelected) {
+                              accounts.forEach((a) => next.delete(a.id));
+                            } else {
+                              accounts.forEach((a) => next.add(a.id));
+                            }
+                            setSelectedAccounts(next);
+                          }}
+                          className="text-xs ml-auto"
+                          style={{ color: "#94a3b8" }}
+                        >
+                          {allSelected ? t("deselectAll") : t("selectAllPlatform")}
+                        </button>
+                      )}
+                    </div>
                     {accounts.map((account) => {
                       const isChecked = selectedAccounts.has(account.id);
                       return (
                         <label
                           key={account.id}
-                          className="flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
+                          className="flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer transition-all"
+                          style={{
+                            background: isChecked ? "rgba(168,85,247,0.08)" : "rgba(255,255,255,0.02)",
+                            border: `1px solid ${isChecked ? "rgba(168,85,247,0.25)" : "rgba(255,255,255,0.05)"}`,
+                          }}
                         >
                           <input
                             type="checkbox"
@@ -550,66 +613,184 @@ export function PostForm({ socialAccounts, categories, post }: PostFormProps) {
                             value={account.id}
                             checked={isChecked}
                             onChange={() => toggleAccount(account.id)}
-                            className="h-4 w-4 rounded border-gray-300"
+                            className="h-4 w-4 rounded"
+                            style={{ accentColor: "#a855f7" }}
                           />
-                          <span className="text-sm">{account.accountName}</span>
+                          <span className="text-sm text-white">{account.accountName}</span>
                           {account.accountType && account.accountType !== "page" && (
-                            <span className="text-xs text-muted-foreground">({account.accountType})</span>
+                            <span className="text-[10px] ml-auto" style={{ color: "#94a3b8" }}>({account.accountType})</span>
                           )}
                         </label>
                       );
                     })}
                   </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SCHEDULE */}
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ background: "#0d1424", border: "1px solid rgba(34,211,238,0.15)" }}
+          >
+            <div className="px-4 py-3.5 flex items-center gap-2" style={{ borderBottom: "1px solid rgba(34,211,238,0.08)" }}>
+              <Calendar className="h-4 w-4" style={{ color: "#22d3ee" }} />
+              <span className="font-semibold text-sm text-white">{t("schedule")}</span>
+            </div>
+            <div className="p-4 space-y-3">
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setScheduleMode("custom")}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-all"
+                  style={scheduleMode === "custom"
+                    ? { background: "rgba(34,211,238,0.12)", color: "#22d3ee", border: "1px solid rgba(34,211,238,0.3)" }
+                    : { background: "rgba(255,255,255,0.02)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.05)" }
+                  }
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  {t("customTime")}
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setScheduleMode("bestTime");
+                    if (selectedPlatforms.length > 0 && !suggestedTime) {
+                      setIsFetchingBestTime(true);
+                      try {
+                        const res = await fetch("/api/scheduling/suggest-time", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ platforms: selectedPlatforms }),
+                        });
+                        if (res.ok) {
+                          const data = await res.json();
+                          setSuggestedTime(new Date(data.suggestedTime).toISOString().slice(0, 16));
+                          setSuggestedReason(data.reason);
+                        }
+                      } catch { /* fallback */ }
+                      finally { setIsFetchingBestTime(false); }
+                    }
+                  }}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium transition-all"
+                  style={scheduleMode === "bestTime"
+                    ? { background: "rgba(168,85,247,0.12)", color: "#a855f7", border: "1px solid rgba(168,85,247,0.3)" }
+                    : { background: "rgba(255,255,255,0.02)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.05)" }
+                  }
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {t("bestTime")}
+                </button>
+              </div>
+
+              {scheduleMode === "custom" && (
+                <Input
+                  type="datetime-local"
+                  id="scheduledAt"
+                  name="scheduledAt"
+                  defaultValue={defaultScheduledAt}
+                  className="text-sm"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(34,211,238,0.2)",
+                    color: "#e2e8f0",
+                    borderRadius: "10px",
+                  }}
+                />
+              )}
+
+              {scheduleMode === "bestTime" && (
+                <div className="space-y-2">
+                  {isFetchingBestTime ? (
+                    <div className="flex items-center gap-2 text-xs p-2" style={{ color: "#94a3b8" }}>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      {t("calculatingBestTime")}
+                    </div>
+                  ) : suggestedTime ? (
+                    <>
+                      <div className="p-2.5 rounded-xl text-xs" style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)", color: "#c084fc" }}>
+                        <Sparkles className="h-3 w-3 inline mr-1" />
+                        {suggestedReason}
+                      </div>
+                      <input type="hidden" name="scheduledAt" value={suggestedTime} />
+                      <Input
+                        type="datetime-local"
+                        value={suggestedTime}
+                        onChange={(e) => setSuggestedTime(e.target.value)}
+                        className="text-sm"
+                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(168,85,247,0.2)", color: "#e2e8f0", borderRadius: "10px" }}
+                      />
+                    </>
+                  ) : (
+                    <p className="text-xs p-2" style={{ color: "#94a3b8" }}>
+                      {selectedPlatforms.length === 0 ? t("selectPlatformsFirst") : t("noBestTimeAvailable")}
+                    </p>
+                  )}
                 </div>
-              );
-            })}
+              )}
+            </div>
           </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("status")}</CardTitle>
-          <CardDescription>
-            {t("statusDesc")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="status"
-                value="DRAFT"
-                defaultChecked={!post || post.status === "DRAFT"}
-                className="h-4 w-4"
-              />
-              <span className="text-sm font-medium">{t("draft")}</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="status"
-                value="SCHEDULED"
-                defaultChecked={post?.status === "SCHEDULED"}
-                className="h-4 w-4"
-              />
-              <span className="text-sm font-medium">{t("scheduled")}</span>
-            </label>
+          {/* STATUS */}
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ background: "#0d1424", border: "1px solid rgba(168,85,247,0.12)" }}
+          >
+            <div className="px-4 py-3.5 flex items-center gap-2" style={{ borderBottom: "1px solid rgba(168,85,247,0.08)" }}>
+              <span className="font-semibold text-sm text-white">{t("status")}</span>
+            </div>
+            <div className="p-4 flex gap-3">
+              {[
+                { value: "DRAFT", label: t("draft"), color: "#94a3b8" },
+                { value: "SCHEDULED", label: t("scheduled"), color: "#22d3ee" },
+              ].map((opt) => {
+                const isDefault = opt.value === "DRAFT"
+                  ? !post || post.status === "DRAFT"
+                  : post?.status === "SCHEDULED";
+                return (
+                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer flex-1">
+                    <input
+                      type="radio"
+                      name="status"
+                      value={opt.value}
+                      defaultChecked={isDefault}
+                      className="h-4 w-4"
+                      style={{ accentColor: opt.color }}
+                    />
+                    <span className="text-sm font-medium" style={{ color: opt.color }}>{opt.label}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
-        </CardContent>
-      </Card>
 
-      <div className="flex justify-end gap-3">
-        <Link href="/posts">
-          <Button type="button" variant="outline">
-            {tCommon("cancel")}
-          </Button>
-        </Link>
-        <Button type="submit" className="gap-2">
-          <Send className="h-4 w-4" />
-          {isEditing ? tCommon("update") : tCommon("create")}
-        </Button>
+          {/* SUBMIT */}
+          <div className="flex flex-col gap-2">
+            <Button
+              type="submit"
+              className="w-full font-bold text-sm h-11"
+              style={{
+                background: "linear-gradient(135deg, #7c3aed, #a855f7)",
+                border: "none",
+                boxShadow: "0 0 25px rgba(168,85,247,0.35)",
+              }}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {isEditing ? tCommon("update") : tCommon("create")}
+            </Button>
+            <Link href="/posts" className="w-full">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full text-sm"
+                style={{ border: "1px solid rgba(168,85,247,0.2)", color: "#94a3b8", background: "transparent" }}
+              >
+                {tCommon("cancel")}
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
     </form>
   );

@@ -4,7 +4,7 @@
 # ═══════════════════════════════════════════════════
 #
 # Dieses Skript richtet einen permanenten Cloudflare
-# Tunnel für sheduler.fichtmueller.org ein.
+# Tunnel für scheduler.fichtmueller.org ein.
 #
 # Voraussetzung: Du musst bei Cloudflare eingeloggt
 # sein und die Domain dort verwalten.
@@ -13,7 +13,7 @@
 set -e
 
 TUNNEL_NAME="social-scheduler"
-DOMAIN="sheduler.fichtmueller.org"
+DOMAIN="scheduler.fichtmueller.org"
 LOCAL_URL="http://localhost:8080"
 
 echo ""

@@ -199,13 +199,13 @@ export async function updateMemberRole(
     return { error: t("notAuthenticated") };
   }
 
-  // Only OWNER can change roles
+  // OWNER or ADMIN can change roles
   const requester = await prisma.teamMember.findUnique({
     where: { teamId_userId: { teamId, userId: session.user.id } },
   });
 
-  if (!requester || requester.role !== "OWNER") {
-    return { error: "Only the team owner can change roles" };
+  if (!requester || (requester.role !== "OWNER" && requester.role !== "ADMIN")) {
+    return { error: "Only owners and admins can change roles" };
   }
 
   // Cannot change own role
@@ -224,6 +224,21 @@ export async function updateMemberRole(
 
   if (!target) {
     return { error: "Member not found" };
+  }
+
+  // Cannot change OWNER role
+  if (target.role === "OWNER") {
+    return { error: "Cannot change the owner's role" };
+  }
+
+  // ADMIN cannot change other ADMINs
+  if (requester.role === "ADMIN" && target.role === "ADMIN") {
+    return { error: "Admins cannot change other admins' roles" };
+  }
+
+  // ADMIN cannot promote to ADMIN
+  if (requester.role === "ADMIN" && newRole === "ADMIN") {
+    return { error: "Only the owner can promote to Admin" };
   }
 
   const updated = await prisma.teamMember.update({
