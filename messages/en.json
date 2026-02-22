@@ -66,6 +66,7 @@
     "inbox": "Inbox",
     "links": "Short Links",
     "team": "Team",
+    "library": "Library",
     "settings": "Settings"
   },
   "dashboard": {
@@ -1063,5 +1064,30 @@
     },
     "you": "You",
     "leaveTeam": "Leave Team"
+  },
+  "apiCredentials": {
+    "title": "API Credentials",
+    "description": "Configure API keys for social media platforms and AI services.",
+    "facebook": "Facebook",
+    "linkedin": "LinkedIn",
+    "twitter": "Twitter / X",
+    "threads": "Threads",
+    "instagram": "Instagram",
+    "anthropic": "Anthropic (Claude AI)",
+    "appId": "App ID",
+    "appSecret": "App Secret",
+    "clientId": "Client ID",
+    "clientSecret": "Client Secret",
+    "apiKey": "API Key",
+    "redirectUri": "Redirect URI",
+    "redirectUriHint": "Enter this URL in the platform's app settings.",
+    "save": "Save",
+    "saved": "Saved!",
+    "saveError": "Error saving credentials",
+    "configured": "Configured",
+    "notConfigured": "Not configured",
+    "clearSecret": "Change",
+    "instagramHint": "Instagram uses Facebook App credentials.",
+    "copied": "Copied!"
   }
 }

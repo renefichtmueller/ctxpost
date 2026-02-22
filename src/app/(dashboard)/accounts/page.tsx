@@ -16,6 +16,7 @@ import { getLinkedInAuthUrl } from "@/lib/social/linkedin";
 import { getInstagramAuthUrl } from "@/lib/social/instagram";
 import { getThreadsAuthUrl } from "@/lib/social/threads";
 import { disconnectSocialAccount } from "@/actions/social-accounts";
+import { getCredentialsForPlatform, getInstagramCredentials } from "@/lib/api-credentials";
 import { Facebook, Linkedin, Plus, Unplug, Twitter, Instagram, AtSign, AlertTriangle, RefreshCw } from "lucide-react";
 import type { Platform } from "@prisma/client";
 import { getTranslations } from "next-intl/server";
@@ -32,10 +33,18 @@ export default async function AccountsPage() {
     orderBy: [{ platform: "asc" }, { accountType: "asc" }, { createdAt: "desc" }],
   });
 
-  const facebookAuthUrl = getFacebookAuthUrl();
-  const linkedInAuthUrl = getLinkedInAuthUrl();
-  const instagramAuthUrl = getInstagramAuthUrl();
-  const threadsAuthUrl = getThreadsAuthUrl();
+  // Fetch per-user credentials from DB (falls back to env vars)
+  const [fbCreds, liCreds, igCreds, thCreds] = await Promise.all([
+    getCredentialsForPlatform(session.user.id, "facebook"),
+    getCredentialsForPlatform(session.user.id, "linkedin"),
+    getInstagramCredentials(session.user.id),
+    getCredentialsForPlatform(session.user.id, "threads"),
+  ]);
+
+  const facebookAuthUrl = getFacebookAuthUrl(fbCreds);
+  const linkedInAuthUrl = getLinkedInAuthUrl(liCreds);
+  const instagramAuthUrl = getInstagramAuthUrl(igCreds);
+  const threadsAuthUrl = getThreadsAuthUrl(thCreds);
 
   const platformCards = [
     {

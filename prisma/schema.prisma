@@ -34,6 +34,7 @@ model User {
   socialAccounts  SocialAccount[]
   aiInsights      AIInsight[]
   brandStyleGuide BrandStyleGuide?
+  appConfig       AppConfig?
   categories      ContentCategory[]
   mediaAssets     MediaAsset[]
   shortLinks      ShortLink[]
@@ -353,6 +354,28 @@ model ShortLink {
 
   @@index([userId])
   @@index([shortCode])
+}
+
+// ─── App Configuration (API Credentials) ────────────────
+
+model AppConfig {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  facebookAppId        String?
+  facebookAppSecret    String?
+  linkedinClientId     String?
+  linkedinClientSecret String?
+  twitterClientId      String?
+  twitterClientSecret  String?
+  threadsAppId         String?
+  threadsAppSecret     String?
+  anthropicApiKey      String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ─── Teams ───────────────────────────────────────────────

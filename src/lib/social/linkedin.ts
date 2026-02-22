@@ -1,6 +1,15 @@
 const LINKEDIN_API_VERSION = "202601";
 
-export function getLinkedInAuthUrl(): string {
+type LinkedInCredentials = {
+  appId: string;
+  appSecret: string;
+  redirectUri: string;
+};
+
+export function getLinkedInAuthUrl(creds?: LinkedInCredentials): string {
+  const clientId = creds?.appId || process.env.LINKEDIN_CLIENT_ID!;
+  const redirectUri = creds?.redirectUri || process.env.LINKEDIN_REDIRECT_URI!;
+
   let scope = "openid profile email w_member_social";
 
   // Add organization scopes if enabled (requires special LinkedIn approval)
@@ -10,15 +19,19 @@ export function getLinkedInAuthUrl(): string {
 
   const params = new URLSearchParams({
     response_type: "code",
-    client_id: process.env.LINKEDIN_CLIENT_ID!,
-    redirect_uri: process.env.LINKEDIN_REDIRECT_URI!,
+    client_id: clientId,
+    redirect_uri: redirectUri,
     scope,
     state: crypto.randomUUID(),
   });
   return `https://www.linkedin.com/oauth/v2/authorization?${params}`;
 }
 
-export async function exchangeLinkedInCode(code: string) {
+export async function exchangeLinkedInCode(code: string, creds?: LinkedInCredentials) {
+  const clientId = creds?.appId || process.env.LINKEDIN_CLIENT_ID!;
+  const clientSecret = creds?.appSecret || process.env.LINKEDIN_CLIENT_SECRET!;
+  const redirectUri = creds?.redirectUri || process.env.LINKEDIN_REDIRECT_URI!;
+
   // Exchange code for access token
   const tokenRes = await fetch(
     "https://www.linkedin.com/oauth/v2/accessToken",
@@ -28,9 +41,9 @@ export async function exchangeLinkedInCode(code: string) {
       body: new URLSearchParams({
         grant_type: "authorization_code",
         code,
-        redirect_uri: process.env.LINKEDIN_REDIRECT_URI!,
-        client_id: process.env.LINKEDIN_CLIENT_ID!,
-        client_secret: process.env.LINKEDIN_CLIENT_SECRET!,
+        redirect_uri: redirectUri,
+        client_id: clientId,
+        client_secret: clientSecret,
       }),
     }
   );

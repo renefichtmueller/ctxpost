@@ -8,8 +8,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { User, Mail, Globe } from "lucide-react";
+import { User, Mail, Globe, Key } from "lucide-react";
 import { AISettingsForm } from "@/components/settings/ai-settings-form";
+import { ApiCredentialsForm } from "@/components/settings/api-credentials-form";
 import { BrandStyleForm } from "@/components/settings/brand-style-form";
 import { TimezoneForm } from "@/components/settings/timezone-form";
 import { LocaleSwitcher } from "@/components/locale-switcher";
@@ -21,6 +22,7 @@ export default async function SettingsPage() {
 
   const t = await getTranslations("settings");
   const tCommon = await getTranslations("common");
+  const tApi = await getTranslations("apiCredentials");
 
   const [user, brandStyle] = await Promise.all([
     prisma.user.findUnique({
@@ -94,6 +96,20 @@ export default async function SettingsPage() {
         currentImageGenUrl={user?.imageGenUrl ?? ""}
         currentImageGenProvider={user?.imageGenProvider ?? "sd-webui"}
       />
+
+      {/* API Credentials */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Key className="h-5 w-5" />
+            {tApi("title")}
+          </CardTitle>
+          <CardDescription>{tApi("description")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ApiCredentialsForm />
+        </CardContent>
+      </Card>
 
       <BrandStyleForm
         initialData={

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getTwitterAuthUrl } from "@/lib/social/twitter";
+import { getCredentialsForPlatform } from "@/lib/api-credentials";
 
 /**
  * Twitter OAuth 2.0 PKCE authorization initiation route.
@@ -15,7 +16,8 @@ export async function GET() {
     return NextResponse.redirect(new URL("/login", baseUrl));
   }
 
-  const { url, state, codeVerifier } = getTwitterAuthUrl();
+  const creds = await getCredentialsForPlatform(session.user.id, "twitter");
+  const { url, state, codeVerifier } = getTwitterAuthUrl(creds);
 
   const response = NextResponse.redirect(url);
 

@@ -66,6 +66,7 @@
     "inbox": "Caixa de entrada",
     "links": "Links curtos",
     "team": "Equipe",
+    "library": "Biblioteca",
     "settings": "Configurações"
   },
   "dashboard": {
@@ -1063,5 +1064,30 @@
     },
     "you": "Voce",
     "leaveTeam": "Sair da equipe"
+  },
+  "apiCredentials": {
+    "title": "Credenciais API",
+    "description": "Configure as chaves API para plataformas de redes sociais e serviços de IA.",
+    "facebook": "Facebook",
+    "linkedin": "LinkedIn",
+    "twitter": "Twitter / X",
+    "threads": "Threads",
+    "instagram": "Instagram",
+    "anthropic": "Anthropic (Claude AI)",
+    "appId": "ID do aplicativo",
+    "appSecret": "Segredo do aplicativo",
+    "clientId": "ID do cliente",
+    "clientSecret": "Segredo do cliente",
+    "apiKey": "Chave API",
+    "redirectUri": "URI de redirecionamento",
+    "redirectUriHint": "Insira esta URL nas configurações do aplicativo da plataforma.",
+    "save": "Salvar",
+    "saved": "Salvo!",
+    "saveError": "Erro ao salvar",
+    "configured": "Configurado",
+    "notConfigured": "Não configurado",
+    "clearSecret": "Alterar",
+    "instagramHint": "Instagram usa as credenciais do aplicativo Facebook.",
+    "copied": "Copiado!"
   }
 }

@@ -66,6 +66,7 @@
     "inbox": "Posteingang",
     "links": "Kurzlinks",
     "team": "Team",
+    "library": "Bibliothek",
     "settings": "Einstellungen"
   },
   "dashboard": {
@@ -1063,5 +1064,30 @@
     },
     "you": "Du",
     "leaveTeam": "Team verlassen"
+  },
+  "apiCredentials": {
+    "title": "API-Zugangsdaten",
+    "description": "Konfigurieren Sie die API-Schlüssel für die Social-Media-Plattformen und KI-Dienste.",
+    "facebook": "Facebook",
+    "linkedin": "LinkedIn",
+    "twitter": "Twitter / X",
+    "threads": "Threads",
+    "instagram": "Instagram",
+    "anthropic": "Anthropic (Claude AI)",
+    "appId": "App-ID",
+    "appSecret": "App-Secret",
+    "clientId": "Client-ID",
+    "clientSecret": "Client-Secret",
+    "apiKey": "API-Schlüssel",
+    "redirectUri": "Redirect-URI",
+    "redirectUriHint": "Diese URL in den App-Einstellungen der Plattform eintragen.",
+    "save": "Speichern",
+    "saved": "Gespeichert!",
+    "saveError": "Fehler beim Speichern",
+    "configured": "Konfiguriert",
+    "notConfigured": "Nicht konfiguriert",
+    "clearSecret": "Ändern",
+    "instagramHint": "Instagram nutzt die Facebook-App-Zugangsdaten.",
+    "copied": "Kopiert!"
   }
 }

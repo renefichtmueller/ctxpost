@@ -27,19 +27,28 @@ function generateCodeChallenge(codeVerifier: string): string {
  * Returns { url, state, codeVerifier } so the caller can store
  * the state and codeVerifier (e.g. in cookies) for validation in the callback.
  */
-export function getTwitterAuthUrl(): {
+type TwitterCredentials = {
+  appId: string;
+  appSecret: string;
+  redirectUri: string;
+};
+
+export function getTwitterAuthUrl(creds?: TwitterCredentials): {
   url: string;
   state: string;
   codeVerifier: string;
 } {
+  const clientId = creds?.appId || process.env.TWITTER_CLIENT_ID!;
+  const redirectUri = creds?.redirectUri || process.env.TWITTER_REDIRECT_URI!;
+
   const state = generateRandomString(32);
   const codeVerifier = generateRandomString(64);
   const codeChallenge = generateCodeChallenge(codeVerifier);
 
   const params = new URLSearchParams({
     response_type: "code",
-    client_id: process.env.TWITTER_CLIENT_ID!,
-    redirect_uri: process.env.TWITTER_REDIRECT_URI!,
+    client_id: clientId,
+    redirect_uri: redirectUri,
     scope: "tweet.read tweet.write users.read offline.access",
     state,
     code_challenge: codeChallenge,
@@ -58,7 +67,8 @@ export function getTwitterAuthUrl(): {
  */
 export async function exchangeTwitterCode(
   code: string,
-  codeVerifier: string
+  codeVerifier: string,
+  creds?: TwitterCredentials
 ): Promise<{
   accessToken: string;
   refreshToken: string;
@@ -68,9 +78,13 @@ export async function exchangeTwitterCode(
   username: string;
   profileImageUrl: string | null;
 }> {
+  const clientId = creds?.appId || process.env.TWITTER_CLIENT_ID!;
+  const clientSecret = creds?.appSecret || process.env.TWITTER_CLIENT_SECRET!;
+  const redirectUri = creds?.redirectUri || process.env.TWITTER_REDIRECT_URI!;
+
   // Build Basic auth header from client_id:client_secret
   const credentials = Buffer.from(
-    `${process.env.TWITTER_CLIENT_ID}:${process.env.TWITTER_CLIENT_SECRET}`
+    `${clientId}:${clientSecret}`
   ).toString("base64");
 
   const tokenRes = await fetch(`${TWITTER_API_BASE}/oauth2/token`, {
@@ -82,9 +96,9 @@ export async function exchangeTwitterCode(
     body: new URLSearchParams({
       grant_type: "authorization_code",
       code,
-      redirect_uri: process.env.TWITTER_REDIRECT_URI!,
+      redirect_uri: redirectUri,
       code_verifier: codeVerifier,
-      client_id: process.env.TWITTER_CLIENT_ID!,
+      client_id: clientId,
     }),
   });
 

@@ -1,11 +1,19 @@
 const GRAPH_API_VERSION = "v22.0";
 const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
 
-export function getFacebookAuthUrl(): string {
+type FacebookCredentials = {
+  appId: string;
+  appSecret: string;
+  redirectUri: string;
+};
+
+export function getFacebookAuthUrl(creds?: FacebookCredentials): string {
+  const appId = creds?.appId || process.env.FACEBOOK_APP_ID!;
+  const redirectUri = creds?.redirectUri || process.env.FACEBOOK_REDIRECT_URI!;
   const state = crypto.randomUUID();
   const params = new URLSearchParams({
-    client_id: process.env.FACEBOOK_APP_ID!,
-    redirect_uri: process.env.FACEBOOK_REDIRECT_URI!,
+    client_id: appId,
+    redirect_uri: redirectUri,
     scope: "pages_show_list,pages_manage_posts,pages_read_engagement,read_insights",
     response_type: "code",
     state,
@@ -13,14 +21,18 @@ export function getFacebookAuthUrl(): string {
   return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params}`;
 }
 
-export async function exchangeFacebookCode(code: string) {
+export async function exchangeFacebookCode(code: string, creds?: FacebookCredentials) {
+  const appId = creds?.appId || process.env.FACEBOOK_APP_ID!;
+  const appSecret = creds?.appSecret || process.env.FACEBOOK_APP_SECRET!;
+  const redirectUri = creds?.redirectUri || process.env.FACEBOOK_REDIRECT_URI!;
+
   // Exchange code for user access token
   const tokenRes = await fetch(
     `${GRAPH_API_BASE}/oauth/access_token?` +
       new URLSearchParams({
-        client_id: process.env.FACEBOOK_APP_ID!,
-        client_secret: process.env.FACEBOOK_APP_SECRET!,
-        redirect_uri: process.env.FACEBOOK_REDIRECT_URI!,
+        client_id: appId,
+        client_secret: appSecret,
+        redirect_uri: redirectUri,
         code,
       })
   );
@@ -39,8 +51,8 @@ export async function exchangeFacebookCode(code: string) {
     `${GRAPH_API_BASE}/oauth/access_token?` +
       new URLSearchParams({
         grant_type: "fb_exchange_token",
-        client_id: process.env.FACEBOOK_APP_ID!,
-        client_secret: process.env.FACEBOOK_APP_SECRET!,
+        client_id: appId,
+        client_secret: appSecret,
         fb_exchange_token: userAccessToken,
       })
   );

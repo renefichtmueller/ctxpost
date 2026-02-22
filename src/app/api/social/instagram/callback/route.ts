@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { exchangeInstagramCode } from "@/lib/social/instagram";
+import { getInstagramCredentials } from "@/lib/api-credentials";
 
 function getBaseUrl(): string {
   return process.env.NEXTAUTH_URL || process.env.AUTH_URL || "http://localhost:3000";
@@ -23,8 +24,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const creds = await getInstagramCredentials(session.user.id);
     const { userToken, tokenExpiresAt, igAccounts } =
-      await exchangeInstagramCode(code);
+      await exchangeInstagramCode(code, creds);
 
     // Save each Instagram Business Account found
     for (const igAccount of igAccounts) {

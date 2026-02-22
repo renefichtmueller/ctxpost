@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { exchangeFacebookCode } from "@/lib/social/facebook";
+import { getCredentialsForPlatform } from "@/lib/api-credentials";
 
 function getBaseUrl(): string {
   return process.env.NEXTAUTH_URL || process.env.AUTH_URL || "http://localhost:3000";
@@ -23,7 +24,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { profile, userToken, tokenExpiresAt, pages } = await exchangeFacebookCode(code);
+    const creds = await getCredentialsForPlatform(session.user.id, "facebook");
+    const { profile, userToken, tokenExpiresAt, pages } = await exchangeFacebookCode(code, creds);
 
     // Always save the user profile account
     const profileAccount = await prisma.socialAccount.upsert({

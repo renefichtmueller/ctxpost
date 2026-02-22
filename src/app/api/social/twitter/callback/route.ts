@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { exchangeTwitterCode } from "@/lib/social/twitter";
+import { getCredentialsForPlatform } from "@/lib/api-credentials";
 
 function getBaseUrl(): string {
   return process.env.NEXTAUTH_URL || process.env.AUTH_URL || "http://localhost:3000";
@@ -46,7 +47,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const data = await exchangeTwitterCode(code, storedCodeVerifier);
+    const creds = await getCredentialsForPlatform(session.user.id, "twitter");
+    const data = await exchangeTwitterCode(code, storedCodeVerifier, creds);
 
     await prisma.socialAccount.upsert({
       where: {

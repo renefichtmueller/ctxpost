@@ -8,11 +8,20 @@ const GRAPH_API_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
  * Requires INSTAGRAM_REDIRECT_URI env var.
  */
 
-export function getInstagramAuthUrl(): string {
+type InstagramCredentials = {
+  appId: string;
+  appSecret: string;
+  redirectUri: string;
+};
+
+export function getInstagramAuthUrl(creds?: InstagramCredentials): string {
+  const appId = creds?.appId || process.env.FACEBOOK_APP_ID!;
+  const redirectUri = creds?.redirectUri || process.env.INSTAGRAM_REDIRECT_URI!;
+
   const state = crypto.randomUUID();
   const params = new URLSearchParams({
-    client_id: process.env.FACEBOOK_APP_ID!,
-    redirect_uri: process.env.INSTAGRAM_REDIRECT_URI!,
+    client_id: appId,
+    redirect_uri: redirectUri,
     scope:
       "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement",
     response_type: "code",
@@ -21,14 +30,18 @@ export function getInstagramAuthUrl(): string {
   return `https://www.facebook.com/${GRAPH_API_VERSION}/dialog/oauth?${params}`;
 }
 
-export async function exchangeInstagramCode(code: string) {
+export async function exchangeInstagramCode(code: string, creds?: InstagramCredentials) {
+  const appId = creds?.appId || process.env.FACEBOOK_APP_ID!;
+  const appSecret = creds?.appSecret || process.env.FACEBOOK_APP_SECRET!;
+  const redirectUri = creds?.redirectUri || process.env.INSTAGRAM_REDIRECT_URI!;
+
   // Step 1: Exchange code for short-lived user access token
   const tokenRes = await fetch(
     `${GRAPH_API_BASE}/oauth/access_token?` +
       new URLSearchParams({
-        client_id: process.env.FACEBOOK_APP_ID!,
-        client_secret: process.env.FACEBOOK_APP_SECRET!,
-        redirect_uri: process.env.INSTAGRAM_REDIRECT_URI!,
+        client_id: appId,
+        client_secret: appSecret,
+        redirect_uri: redirectUri,
         code,
       })
   );
@@ -47,8 +60,8 @@ export async function exchangeInstagramCode(code: string) {
     `${GRAPH_API_BASE}/oauth/access_token?` +
       new URLSearchParams({
         grant_type: "fb_exchange_token",
-        client_id: process.env.FACEBOOK_APP_ID!,
-        client_secret: process.env.FACEBOOK_APP_SECRET!,
+        client_id: appId,
+        client_secret: appSecret,
         fb_exchange_token: userAccessToken,
       })
   );

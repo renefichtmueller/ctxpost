@@ -39,6 +39,7 @@ const navItems: Array<{ href: string; key: NavKey; icon: typeof LayoutDashboard 
   { href: "/calendar", key: "calendar", icon: Calendar },
   { href: "/queue", key: "queue", icon: ListOrdered },
   { href: "/inbox", key: "inbox", icon: Inbox },
+  { href: "/library", key: "library", icon: FolderOpen },
   { href: "/links", key: "links", icon: Link2 },
   { href: "/analytics", key: "analytics", icon: BarChart3 },
   { href: "/ai-insights", key: "aiInsights", icon: Sparkles },

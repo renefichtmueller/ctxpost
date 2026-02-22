@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { exchangeThreadsCode } from "@/lib/social/threads";
+import { getCredentialsForPlatform } from "@/lib/api-credentials";
 
 function getBaseUrl(): string {
   return process.env.NEXTAUTH_URL || process.env.AUTH_URL || "http://localhost:3000";
@@ -23,7 +24,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const data = await exchangeThreadsCode(code);
+    const creds = await getCredentialsForPlatform(session.user.id, "threads");
+    const data = await exchangeThreadsCode(code, creds);
 
     await prisma.socialAccount.upsert({
       where: {

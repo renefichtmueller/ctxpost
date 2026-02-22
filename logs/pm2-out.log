@@ -1,0 +1,13 @@
+2026-02-22 00:34:30 +01:00: ▲ Next.js 16.1.6
+2026-02-22 00:34:30 +01:00: - Local:         http://localhost:3000
+2026-02-22 00:34:30 +01:00: - Network:       http://0.0.0.0:3000
+2026-02-22 00:34:30 +01:00: 
+2026-02-22 00:34:30 +01:00: ✓ Starting...
+2026-02-22 00:34:30 +01:00: ✓ Ready in 32ms
+2026-02-22 00:36:09 +01:00: ▲ Next.js 16.1.6
+2026-02-22 00:36:09 +01:00: - Local:         http://localhost:3000
+2026-02-22 00:36:09 +01:00: - Network:       http://0.0.0.0:3000
+2026-02-22 00:36:09 +01:00: 
+2026-02-22 00:36:09 +01:00: ✓ Starting...
+2026-02-22 00:36:09 +01:00: ✓ Ready in 31ms
+2026-02-22 00:49:02 +01:00: LinkedIn userinfo response: {"sub":"zj78ShEmAu","email_verified":true,"name":"René Fichtmüller","locale":{"country":"DE","language":"de"},"given_name":"René","family_name":"Fichtmüller","email":"rene.fichtmueller@gmail.com","picture":"https://media.licdn.com/dms/image/v2/D4E03AQFOv0MEnirSqA/profile-displayphoto-shrink_100_100/profile-displayphoto-shrink_100_100/0/1694668007038?e=1773273600&v=beta&t=MMhSaGFJw41sLL8TzrUeE9tIULgrB4BvkZR0YIA5V-0"}

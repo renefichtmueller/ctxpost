@@ -7,11 +7,20 @@ const THREADS_API_BASE = "https://graph.threads.net";
  * API Docs: https://developers.facebook.com/docs/threads
  */
 
-export function getThreadsAuthUrl(): string {
+type ThreadsCredentials = {
+  appId: string;
+  appSecret: string;
+  redirectUri: string;
+};
+
+export function getThreadsAuthUrl(creds?: ThreadsCredentials): string {
+  const appId = creds?.appId || process.env.THREADS_APP_ID!;
+  const redirectUri = creds?.redirectUri || process.env.THREADS_REDIRECT_URI!;
+
   const state = crypto.randomUUID();
   const params = new URLSearchParams({
-    client_id: process.env.THREADS_APP_ID!,
-    redirect_uri: process.env.THREADS_REDIRECT_URI!,
+    client_id: appId,
+    redirect_uri: redirectUri,
     scope: "threads_basic,threads_content_publish,threads_manage_replies",
     response_type: "code",
     state,
@@ -19,7 +28,11 @@ export function getThreadsAuthUrl(): string {
   return `https://threads.net/oauth/authorize?${params}`;
 }
 
-export async function exchangeThreadsCode(code: string) {
+export async function exchangeThreadsCode(code: string, creds?: ThreadsCredentials) {
+  const appId = creds?.appId || process.env.THREADS_APP_ID!;
+  const appSecret = creds?.appSecret || process.env.THREADS_APP_SECRET!;
+  const redirectUri = creds?.redirectUri || process.env.THREADS_REDIRECT_URI!;
+
   // Step 1: Exchange code for short-lived access token
   const tokenRes = await fetch(
     `${THREADS_API_BASE}/oauth/access_token`,
@@ -27,9 +40,9 @@ export async function exchangeThreadsCode(code: string) {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
-        client_id: process.env.THREADS_APP_ID!,
-        client_secret: process.env.THREADS_APP_SECRET!,
-        redirect_uri: process.env.THREADS_REDIRECT_URI!,
+        client_id: appId,
+        client_secret: appSecret,
+        redirect_uri: redirectUri,
         grant_type: "authorization_code",
         code,
       }),
@@ -51,7 +64,7 @@ export async function exchangeThreadsCode(code: string) {
     `${THREADS_API_BASE}/access_token?` +
       new URLSearchParams({
         grant_type: "th_exchange_token",
-        client_secret: process.env.THREADS_APP_SECRET!,
+        client_secret: appSecret,
         access_token: shortLivedToken,
       })
   );
