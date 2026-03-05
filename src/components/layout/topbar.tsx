@@ -32,7 +32,7 @@ export function Topbar() {
       className="sticky top-0 z-50 flex items-center justify-between px-4 md:px-6 py-3"
       style={{
         background: "rgba(8, 14, 26, 0.85)",
-        borderBottom: "1px solid rgba(168, 85, 247, 0.1)",
+        borderBottom: "1px solid rgba(99, 102, 241, 0.1)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
       }}
@@ -64,7 +64,7 @@ export function Topbar() {
           className="h-9 w-9 rounded-xl transition-all duration-200 hover:scale-105"
           style={{
             background: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid rgba(168, 85, 247, 0.12)",
+            border: "1px solid rgba(99, 102, 241, 0.12)",
             color: "#94a3b8",
           }}
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -80,8 +80,8 @@ export function Topbar() {
             size="sm"
             className="h-9 gap-1.5 text-xs font-semibold text-white border-0 hidden sm:flex"
             style={{
-              background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-              boxShadow: "0 0 12px rgba(124, 58, 237, 0.4)",
+              background: "linear-gradient(135deg, #4f46e5, #6366f1)",
+              boxShadow: "0 0 12px rgba(79, 70, 229, 0.4)",
             }}
           >
             <Zap className="w-3.5 h-3.5" />
@@ -98,14 +98,14 @@ export function Topbar() {
               className="gap-2 rounded-xl h-9 px-2.5 transition-all duration-200"
               style={{
                 background: "rgba(255, 255, 255, 0.04)",
-                border: "1px solid rgba(168, 85, 247, 0.12)",
+                border: "1px solid rgba(99, 102, 241, 0.12)",
               }}
             >
               <div
                 className="flex items-center justify-center h-6 w-6 rounded-full text-white text-xs font-bold shrink-0"
                 style={{
-                  background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-                  boxShadow: "0 0 8px rgba(168, 85, 247, 0.5)"
+                  background: "linear-gradient(135deg, #4f46e5, #6366f1)",
+                  boxShadow: "0 0 8px rgba(99, 102, 241, 0.5)"
                 }}
               >
                 {userInitial}
@@ -119,21 +119,21 @@ export function Topbar() {
             align="end"
             className="w-48 rounded-xl"
             style={{
-              background: "#0d1424",
-              border: "1px solid rgba(168, 85, 247, 0.2)",
+              background: "#0e1528",
+              border: "1px solid rgba(99, 102, 241, 0.2)",
             }}
           >
             <DropdownMenuLabel className="text-xs text-slate-300 font-mono">
               {session?.user?.email}
             </DropdownMenuLabel>
-            <DropdownMenuSeparator style={{ background: "rgba(168, 85, 247, 0.1)" }} />
+            <DropdownMenuSeparator style={{ background: "rgba(99, 102, 241, 0.1)" }} />
             <DropdownMenuItem asChild>
               <Link href="/settings" className="flex items-center gap-2 text-slate-300 hover:text-white rounded-lg cursor-pointer">
-                <Settings className="h-4 w-4" style={{ color: "#a855f7" }} />
+                <Settings className="h-4 w-4" style={{ color: "#6366f1" }} />
                 {t("settings")}
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuSeparator style={{ background: "rgba(168, 85, 247, 0.1)" }} />
+            <DropdownMenuSeparator style={{ background: "rgba(99, 102, 241, 0.1)" }} />
             <DropdownMenuItem
               onClick={() => logoutUser()}
               className="flex items-center gap-2 rounded-lg cursor-pointer"

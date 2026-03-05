@@ -73,13 +73,13 @@ export function Sidebar() {
 
   const navGroups: NavGroup[] = [
     {
-      color: "#a855f7",
+      color: "#6366f1",
       groupLabel: "Content",
       items: [
         { href: "/dashboard", icon: LayoutDashboard, label: t("dashboard") },
         { href: "/posts/new", icon: PlusCircle, label: t("newPost"), badge: "+", badgeColor: "#22d3ee" },
         { href: "/posts", icon: PenSquare, label: t("posts") },
-        { href: "/ideas", icon: Lightbulb, label: t("ideas"), badge: "AI", badgeColor: "#a855f7" },
+        { href: "/ideas", icon: Lightbulb, label: t("ideas"), badge: "AI", badgeColor: "#6366f1" },
         { href: "/calendar", icon: Calendar, label: t("calendar") },
         { href: "/queue", icon: ListOrdered, label: t("queue") },
       ],
@@ -124,21 +124,21 @@ export function Sidebar() {
         style={{
           width: sidebarWidth,
           minWidth: sidebarWidth,
-          background: "#080e1a",
-          borderRight: "1px solid rgba(168, 85, 247, 0.12)",
+          background: "#090f1f",
+          borderRight: "1px solid rgba(99, 102, 241, 0.12)",
           transition: "width 280ms cubic-bezier(0.4, 0, 0.2, 1), min-width 280ms cubic-bezier(0.4, 0, 0.2, 1)",
         }}
       >
         {/* Top accent line */}
         <div
           className="h-[2px] w-full shrink-0"
-          style={{ background: "linear-gradient(90deg, #7c3aed, #a855f7, #22d3ee, #f472b6)" }}
+          style={{ background: "linear-gradient(90deg, #4f46e5, #6366f1, #22d3ee, #f472b6)" }}
         />
 
         {/* Logo */}
         <div
           className="flex items-center py-4 shrink-0 px-3.5"
-          style={{ borderBottom: "1px solid rgba(168, 85, 247, 0.08)" }}
+          style={{ borderBottom: "1px solid rgba(99, 102, 241, 0.08)" }}
         >
           <Tooltip>
             <TooltipTrigger asChild>
@@ -146,8 +146,8 @@ export function Sidebar() {
                 <div
                   className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 hover:scale-110 cursor-pointer"
                   style={{
-                    background: "linear-gradient(135deg, #7c3aed, #a855f7)",
-                    boxShadow: "0 0 16px rgba(168, 85, 247, 0.4)",
+                    background: "linear-gradient(135deg, #4f46e5, #6366f1)",
+                    boxShadow: "0 0 16px rgba(99, 102, 241, 0.4)",
                   }}
                 >
                   <Zap className="w-4 h-4 text-white" />
@@ -224,9 +224,9 @@ export function Sidebar() {
                         style={
                           isActive
                             ? {
-                                background: "linear-gradient(135deg, rgba(124,58,237,0.3), rgba(168,85,247,0.2))",
-                                border: "1px solid rgba(168,85,247,0.3)",
-                                boxShadow: "0 0 12px rgba(168,85,247,0.15)",
+                                background: "linear-gradient(135deg, rgba(79,70,229,0.3), rgba(99,102,241,0.2))",
+                                border: "1px solid rgba(99,102,241,0.3)",
+                                boxShadow: "0 0 12px rgba(99,102,241,0.15)",
                               }
                             : { border: "1px solid transparent" }
                         }
@@ -235,7 +235,7 @@ export function Sidebar() {
                         {isActive && (
                           <div
                             className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-                            style={{ background: "linear-gradient(180deg, #a855f7, #22d3ee)" }}
+                            style={{ background: "linear-gradient(180deg, #6366f1, #22d3ee)" }}
                           />
                         )}
 
@@ -246,7 +246,7 @@ export function Sidebar() {
                           ) : (
                             <item.icon
                               className={cn("h-4 w-4 transition-transform duration-200", !isActive && "group-hover:scale-110")}
-                              style={{ color: isActive ? "#a855f7" : undefined }}
+                              style={{ color: isActive ? "#6366f1" : undefined }}
                             />
                           )}
                           {showSpinner && (
@@ -296,9 +296,9 @@ export function Sidebar() {
                           style={
                             isActive
                               ? {
-                                  background: "linear-gradient(135deg, rgba(124,58,237,0.3), rgba(168,85,247,0.2))",
-                                  border: "1px solid rgba(168,85,247,0.3)",
-                                  boxShadow: "0 0 12px rgba(168,85,247,0.15)",
+                                  background: "linear-gradient(135deg, rgba(79,70,229,0.3), rgba(99,102,241,0.2))",
+                                  border: "1px solid rgba(99,102,241,0.3)",
+                                  boxShadow: "0 0 12px rgba(99,102,241,0.15)",
                                 }
                               : { border: "1px solid transparent" }
                           }
@@ -307,7 +307,7 @@ export function Sidebar() {
                           {isActive && (
                             <div
                               className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full"
-                              style={{ background: "linear-gradient(180deg, #a855f7, #22d3ee)" }}
+                              style={{ background: "linear-gradient(180deg, #6366f1, #22d3ee)" }}
                             />
                           )}
 
@@ -317,7 +317,7 @@ export function Sidebar() {
                           ) : (
                             <item.icon
                               className={cn("h-4 w-4 transition-transform duration-200", !isActive && "group-hover:scale-110")}
-                              style={{ color: isActive ? "#a855f7" : undefined }}
+                              style={{ color: isActive ? "#6366f1" : undefined }}
                             />
                           )}
 
@@ -364,7 +364,7 @@ export function Sidebar() {
         {/* Bottom: AI status + toggle */}
         <div
           className="flex flex-col items-center pb-4 pt-3 gap-3 shrink-0"
-          style={{ borderTop: "1px solid rgba(168, 85, 247, 0.08)" }}
+          style={{ borderTop: "1px solid rgba(99, 102, 241, 0.08)" }}
         >
           {/* AI status */}
           {isAnyRunning ? (
@@ -409,9 +409,9 @@ export function Sidebar() {
                 onClick={toggleExpanded}
                 className="flex items-center justify-center w-8 h-8 rounded-xl transition-all duration-200 hover:scale-110"
                 style={{
-                  background: "rgba(168, 85, 247, 0.08)",
-                  border: "1px solid rgba(168, 85, 247, 0.2)",
-                  color: "#a855f7",
+                  background: "rgba(99, 102, 241, 0.08)",
+                  border: "1px solid rgba(99, 102, 241, 0.2)",
+                  color: "#6366f1",
                 }}
                 aria-label={isExpanded ? "Sidebar einklappen" : "Sidebar ausklappen"}
               >

@@ -39,7 +39,7 @@ export function LoginForm() {
           <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
             <Zap className="w-4 h-4 text-white" />
           </div>
-          <span className="text-xs font-mono" style={{ color: "#22d3ee" }}>// SIGNIN</span>
+          <span className="text-xs font-mono" style={{ color: "#818cf8" }}>// SIGNIN</span>
         </div>
         <h2 className="text-2xl font-bold text-white">Willkommen zurück</h2>
         <p className="text-sm" style={{ color: "#94a3b8" }}>
@@ -62,7 +62,7 @@ export function LoginForm() {
             className="h-11 text-white placeholder:text-slate-300"
             style={{
               background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(168, 85, 247, 0.15)",
+              border: "1px solid rgba(99, 102, 241, 0.18)",
               borderRadius: "0.625rem",
             }}
           />
@@ -83,7 +83,7 @@ export function LoginForm() {
               className="h-11 text-white placeholder:text-slate-300 pr-11"
               style={{
                 background: "rgba(255, 255, 255, 0.04)",
-                border: "1px solid rgba(168, 85, 247, 0.15)",
+                border: "1px solid rgba(99, 102, 241, 0.18)",
                 borderRadius: "0.625rem",
               }}
             />
@@ -101,8 +101,11 @@ export function LoginForm() {
         <Button
           type="submit"
           disabled={pending}
-          className="w-full h-11 font-semibold text-white gradient-primary border-0 mt-2 group relative overflow-hidden"
-          style={{ boxShadow: pending ? "none" : "0 0 20px rgba(124, 58, 237, 0.4)" }}
+          className="w-full h-11 font-semibold text-white border-0 mt-2 group relative overflow-hidden"
+          style={{
+            background: "linear-gradient(135deg, #4f46e5, #6366f1)",
+            boxShadow: pending ? "none" : "0 0 20px rgba(99, 102, 241, 0.4)",
+          }}
         >
           {pending ? (
             <span className="flex items-center gap-2">
@@ -121,10 +124,10 @@ export function LoginForm() {
       {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t" style={{ borderColor: "rgba(168, 85, 247, 0.1)" }} />
+          <div className="w-full border-t" style={{ borderColor: "rgba(99, 102, 241, 0.1)" }} />
         </div>
         <div className="relative flex justify-center">
-          <span className="px-3 text-xs" style={{ background: "#0d1424", color: "#334155" }}>
+          <span className="px-3 text-xs" style={{ background: "#0f172a", color: "#334155" }}>
             NEU BEI CTXPOST?
           </span>
         </div>
@@ -135,9 +138,9 @@ export function LoginForm() {
         href="/register"
         className="flex items-center justify-center gap-2 w-full h-11 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-[1.01]"
         style={{
-          background: "rgba(168, 85, 247, 0.06)",
-          border: "1px solid rgba(168, 85, 247, 0.15)",
-          color: "#a855f7",
+          background: "rgba(99, 102, 241, 0.06)",
+          border: "1px solid rgba(99, 102, 241, 0.18)",
+          color: "#818cf8",
         }}
       >
         {t("register")}
