@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Lightbulb, Sparkles, RefreshCw, ArrowRight, Loader2,
-  TrendingUp, Rss, AlertCircle, Zap, Brain
+  TrendingUp, Rss, AlertCircle, Zap, Brain, Bot, CheckCircle2
 } from "lucide-react";
 
 interface PostIdeasProps {
@@ -44,6 +44,8 @@ export function PostIdeas({ hasAI, hasBrand, socialAccounts }: PostIdeasProps) {
   const [trendTopics, setTrendTopics] = useState<string[]>([]);
   const [rssIdeas, setRssIdeas] = useState<Idea[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isCreatingDrafts, setIsCreatingDrafts] = useState(false);
+  const [draftsResult, setDraftsResult] = useState<{ created: number; aiEnhanced: number } | null>(null);
 
   // Auto-load trends + RSS on mount
   useEffect(() => {
@@ -123,6 +125,28 @@ export function PostIdeas({ hasAI, hasBrand, socialAccounts }: PostIdeasProps) {
       }
     } catch { /* ignore */ } finally {
       setIsLoadingRSS(false);
+    }
+  };
+
+  const createAIDrafts = async () => {
+    setIsCreatingDrafts(true);
+    setDraftsResult(null);
+    try {
+      const res = await fetch("/api/ai/crawl-enhance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ limit: 3 }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `HTTP ${res.status}`);
+      }
+      const data = await res.json() as { created: number; aiEnhanced: number };
+      setDraftsResult({ created: data.created, aiEnhanced: data.aiEnhanced });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Fehler beim Erstellen der KI-Drafts");
+    } finally {
+      setIsCreatingDrafts(false);
     }
   };
 
@@ -344,20 +368,68 @@ export function PostIdeas({ hasAI, hasBrand, socialAccounts }: PostIdeasProps) {
               </CardTitle>
               <CardDescription style={{ color: "#94a3b8" }}>{t("rssDesc")}</CardDescription>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={loadRSSIdeas}
-              disabled={isLoadingRSS}
-              style={{ color: "#94a3b8" }}
-            >
-              {isLoadingRSS ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* KI-Drafts Button */}
+              <Button
+                size="sm"
+                onClick={createAIDrafts}
+                disabled={isCreatingDrafts || !hasAI}
+                title={!hasAI ? "KI-Anbieter in Einstellungen konfigurieren" : "RSS-Artikel mit KI zu Entwürfen verarbeiten"}
+                className="gap-1.5 text-white border-0 text-xs"
+                style={{
+                  background: isCreatingDrafts ? "rgba(34,211,238,0.1)" : "linear-gradient(135deg, #0e7490, #22d3ee)",
+                  boxShadow: isCreatingDrafts ? "none" : "0 0 12px rgba(34,211,238,0.25)",
+                  opacity: !hasAI ? 0.5 : 1,
+                }}
+              >
+                {isCreatingDrafts ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : draftsResult ? (
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                ) : (
+                  <Bot className="h-3.5 w-3.5" />
+                )}
+                {isCreatingDrafts
+                  ? "KI läuft…"
+                  : draftsResult
+                  ? `${draftsResult.created} Drafts (${draftsResult.aiEnhanced}× KI)`
+                  : "KI-Drafts"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={loadRSSIdeas}
+                disabled={isLoadingRSS}
+                style={{ color: "#94a3b8" }}
+              >
+                {isLoadingRSS ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
+          {/* Success message after draft creation */}
+          {draftsResult && draftsResult.created > 0 && (
+            <div className="flex items-center gap-2 mt-2 p-2 rounded-lg text-xs"
+              style={{ background: "rgba(34,211,238,0.08)", border: "1px solid rgba(34,211,238,0.2)", color: "#22d3ee" }}>
+              <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>
+                {draftsResult.created} Entwurf{draftsResult.created !== 1 ? "e" : ""} erstellt
+                {draftsResult.aiEnhanced > 0 && ` (${draftsResult.aiEnhanced}× KI-optimiert)`}
+                {" — "}
+                <a href="/posts" style={{ textDecoration: "underline" }}>Zu den Entwürfen</a>
+              </span>
+            </div>
+          )}
+          {draftsResult && draftsResult.created === 0 && (
+            <div className="flex items-center gap-2 mt-2 p-2 rounded-lg text-xs"
+              style={{ background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.2)", color: "#fb923c" }}>
+              <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>Alle aktuellen RSS-Artikel wurden bereits als Entwurf gespeichert.</span>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {isLoadingRSS && rssIdeas.length === 0 ? (

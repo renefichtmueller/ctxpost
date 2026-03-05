@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { askClaude } from "./claude-client";
-import { askOllama, askOllamaStreaming } from "./ollama-client";
+import { askOllama, askOllamaStreaming, ollamaAuthHeaders } from "./ollama-client";
 
 export type AITaskType = "text" | "image" | "analysis";
 
@@ -51,7 +51,7 @@ export async function getUserAIConfig(
   return {
     provider,
     model,
-    ollamaUrl: user?.ollamaUrl ?? "http://localhost:11434",
+    ollamaUrl: user?.ollamaUrl ?? (process.env.OLLAMA_BASE_URL || "http://localhost:11434"),
     imageGenUrl: user?.imageGenUrl ?? undefined,
     imageGenProvider: (user?.imageGenProvider as ImageGenProvider) ?? "sd-webui",
   };
@@ -66,6 +66,7 @@ async function checkOllamaHealth(ollamaUrl: string): Promise<boolean> {
     const timeout = setTimeout(() => controller.abort(), 5000);
     const response = await fetch(`${ollamaUrl}/api/tags`, {
       signal: controller.signal,
+      headers: { ...ollamaAuthHeaders() },
     });
     clearTimeout(timeout);
     return response.ok;

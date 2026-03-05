@@ -3,6 +3,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { publishToFacebook, validateFacebookToken } from "@/lib/social/facebook";
 import { publishToLinkedIn } from "@/lib/social/linkedin";
+import { decrypt } from "@/lib/crypto";
+
+/** Decrypt access token, handling both encrypted and legacy plaintext values */
+function decryptToken(token: string): string {
+  if (!process.env.ENCRYPTION_KEY) return token;
+  try { return decrypt(token); } catch { return token; }
+}
 
 /**
  * Test endpoint: Immediately publishes a test message to a connected social account.
@@ -22,7 +29,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "accountId is required" }, { status: 400 });
   }
 
-  const account = await prisma.socialAccount.findFirst({
+  const rawAccount = await prisma.socialAccount.findFirst({
     where: {
       id: accountId,
       userId: session.user.id,
@@ -30,9 +37,12 @@ export async function POST(request: Request) {
     },
   });
 
-  if (!account) {
+  if (!rawAccount) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
   }
+
+  // Decrypt token at the boundary — all downstream code receives plaintext
+  const account = { ...rawAccount, accessToken: decryptToken(rawAccount.accessToken) };
 
   const testMessage = message || `🧪 Test post from CtxPost - ${new Date().toLocaleString()}`;
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Upload, X, FileText, Film } from "lucide-react";
+import { Upload, X, FileText, Film, Clipboard } from "lucide-react";
 import Image from "next/image";
 
 interface MediaUploadProps {
@@ -166,6 +166,38 @@ export function MediaUpload({
     [handleFiles]
   );
 
+  // Global paste handler: captures Ctrl+V image paste anywhere on page
+  useEffect(() => {
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const imageFiles: File[] = [];
+      for (const item of Array.from(items)) {
+        if (item.kind === "file" && item.type.startsWith("image/")) {
+          const file = item.getAsFile();
+          if (file) {
+            const ext = item.type.split("/")[1].replace("jpeg", "jpg");
+            const renamed = new File(
+              [file],
+              `paste-${Date.now()}.${ext}`,
+              { type: item.type }
+            );
+            imageFiles.push(renamed);
+          }
+        }
+      }
+
+      if (imageFiles.length > 0) {
+        e.preventDefault();
+        handleFiles(imageFiles);
+      }
+    };
+
+    document.addEventListener("paste", handleGlobalPaste);
+    return () => document.removeEventListener("paste", handleGlobalPaste);
+  }, [handleFiles]);
+
   const handleClick = () => {
     fileInputRef.current?.click();
   };
@@ -205,6 +237,10 @@ export function MediaUpload({
               {isUploading ? t("uploading") : t("dropHere")}
             </p>
             <p className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>{t("fileTypes")}</p>
+            <div className="flex items-center justify-center gap-1 mt-1.5" style={{ color: "#64748b" }}>
+              <Clipboard className="h-3 w-3" />
+              <span className="text-xs">Strg+V zum Einfügen</span>
+            </div>
           </div>
           <input
             ref={fileInputRef}

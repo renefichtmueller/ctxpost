@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fetchAllFeeds } from "@/lib/data/rss-monitor";
+import { getUserAIConfig } from "@/lib/ai/ai-provider";
+import { enhanceRSSItemWithAI } from "@/lib/ai/rss-enhancer";
 
 export const dynamic = "force-dynamic";
 
@@ -35,10 +37,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ created: 0, message: "No admin user with active accounts" });
     }
 
+    // Load AI config for the admin user (graceful: falls back to raw content if unavailable)
+    let aiConfig;
+    try {
+      aiConfig = await getUserAIConfig(adminUser.id, "text");
+    } catch (err) {
+      console.warn("[Cron RSS Auto-Post] Could not load AI config:", err);
+    }
+
     let created = 0;
+    let aiEnhancedCount = 0;
 
     for (const item of items.slice(0, 3)) {
-      // Check if a post with this content already exists (dedup)
+      // Check if a post with this content already exists (dedup by title prefix within 24h)
       const titleSnippet = item.title.slice(0, 50);
       const existing = await prisma.post.findFirst({
         where: {
@@ -49,7 +60,19 @@ export async function GET(request: NextRequest) {
 
       if (existing) continue;
 
-      const content = `${item.title}\n\n${item.snippet || ""}\n\n${item.link || ""}`.trim();
+      // Enhance with AI if available, fall back to raw content
+      let content: string;
+      let aiEnhanced = false;
+
+      if (aiConfig) {
+        const result = await enhanceRSSItemWithAI(item, aiConfig);
+        content = result.content;
+        aiEnhanced = result.aiEnhanced;
+      } else {
+        content = `${item.title}\n\n${item.snippet || ""}\n\n${item.link || ""}`.trim();
+      }
+
+      if (aiEnhanced) aiEnhancedCount++;
 
       await prisma.post.create({
         data: {
@@ -68,8 +91,10 @@ export async function GET(request: NextRequest) {
       created++;
     }
 
-    console.log(`[Cron RSS Auto-Post] Created ${created} draft posts from RSS`);
-    return NextResponse.json({ created });
+    console.log(
+      `[Cron RSS Auto-Post] Created ${created} draft posts (${aiEnhancedCount} AI-enhanced, ${created - aiEnhancedCount} raw)`
+    );
+    return NextResponse.json({ created, aiEnhanced: aiEnhancedCount });
   } catch (error) {
     console.error("[Cron RSS Auto-Post] Error:", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

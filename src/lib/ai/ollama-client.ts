@@ -22,6 +22,12 @@ interface OllamaTagsResponse {
   models: OllamaModel[];
 }
 
+/** Returns the Ollama API key headers if OLLAMA_API_KEY is configured */
+export function ollamaAuthHeaders(): Record<string, string> {
+  const key = process.env.OLLAMA_API_KEY;
+  return key ? { "x-ollama-key": key } : {};
+}
+
 export async function askOllama(
   ollamaUrl: string,
   model: string,
@@ -30,7 +36,7 @@ export async function askOllama(
 ): Promise<string> {
   const response = await fetch(`${ollamaUrl}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...ollamaAuthHeaders() },
     body: JSON.stringify({
       model,
       messages: [
@@ -68,7 +74,7 @@ export async function askOllamaStreaming(
 ): Promise<string> {
   const response = await fetch(`${ollamaUrl}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...ollamaAuthHeaders() },
     body: JSON.stringify({
       model,
       messages: [
@@ -128,6 +134,7 @@ export async function listOllamaModels(
   try {
     const response = await fetch(`${ollamaUrl}/api/tags`, {
       method: "GET",
+      headers: { ...ollamaAuthHeaders() },
       signal: AbortSignal.timeout(5000),
     });
 

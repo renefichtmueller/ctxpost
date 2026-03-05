@@ -41,7 +41,7 @@ export async function updateAISettings(formData: FormData) {
         textModel,
         imageModel: imageModel || "",
         analysisModel: analysisModel || textModel,
-        ollamaUrl: ollamaUrl || "http://localhost:11434",
+        ollamaUrl: ollamaUrl || process.env.OLLAMA_BASE_URL || "http://localhost:11434",
         imageGenUrl: imageGenUrl || null,
         imageGenProvider: imageGenProvider || "sd-webui",
       },
