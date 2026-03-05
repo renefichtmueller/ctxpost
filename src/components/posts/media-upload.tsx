@@ -74,11 +74,18 @@ export function MediaUpload({
       body: formData,
     });
 
+    const isJson = response.headers
+      .get("content-type")
+      ?.includes("application/json");
+
     if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || t("uploadError"));
+      const msg = isJson
+        ? (await response.json()).error
+        : null;
+      throw new Error(msg || t("uploadError"));
     }
 
+    if (!isJson) throw new Error(t("uploadError"));
     const data = await response.json();
     return data.url as string;
   };

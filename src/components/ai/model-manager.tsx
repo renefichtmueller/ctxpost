@@ -78,6 +78,80 @@ function formatSize(bytes: number): string {
   return gb >= 1 ? `${gb.toFixed(1)} GB` : `${(gb * 1024).toFixed(0)} MB`;
 }
 
+/** Parses numeric parameter count from strings like "32.8B" → 32.8 */
+function getModelParamCount(paramSize: string): number {
+  const m = paramSize.match(/(\d+\.?\d*)\s*[Bb]/);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+/** Classifies model speed/quality tier by parameter count */
+function getModelTier(count: number): "fast" | "balanced" | "quality" {
+  if (count <= 8) return "fast";
+  if (count <= 34) return "balanced";
+  return "quality";
+}
+
+/**
+ * Returns the installed model closest to the quality/speed optimum for a task.
+ * Targets: text=22B, vision=13B, analysis=10B
+ */
+function getRecommendedModel(
+  models: OllamaModel[],
+  task: "text" | "vision" | "analysis"
+): string | null {
+  const scored = models
+    .map((m) => ({ name: m.name, count: getModelParamCount(m.details.parameter_size) }))
+    .filter((m) => m.count > 0);
+  if (scored.length === 0) return null;
+  const target = task === "analysis" ? 10 : task === "text" ? 22 : 13;
+  const inRange = scored.filter(
+    (m) => m.count >= target * 0.55 && m.count <= target * 1.6
+  );
+  const pool = inRange.length > 0 ? inRange : scored;
+  return pool.sort(
+    (a, b) => Math.abs(a.count - target) - Math.abs(b.count - target)
+  )[0].name;
+}
+
+const TIER_CFG = {
+  fast:     { label: "Schnell ≤8B",    cls: "bg-green-500/10 text-green-400 border border-green-500/20",  icon: "⚡" },
+  balanced: { label: "Ausgewogen",      cls: "bg-blue-500/10 text-blue-400 border border-blue-500/20",    icon: "⚖" },
+  quality:  { label: "Beste Qualitat",  cls: "bg-purple-500/10 text-purple-400 border border-purple-500/20", icon: "★" },
+} as const;
+
+function ModelRecommendationHint({
+  selectedModel,
+  models,
+  task,
+}: {
+  selectedModel: string;
+  models: OllamaModel[];
+  task: "text" | "vision" | "analysis";
+}) {
+  const m = models.find((x) => x.name === selectedModel);
+  const count = m ? getModelParamCount(m.details.parameter_size) : 0;
+  const tier = count > 0 ? getModelTier(count) : null;
+  const rec = getRecommendedModel(models, task);
+  if (!tier) return null;
+  const cfg = TIER_CFG[tier];
+  const isRec = rec === selectedModel;
+  return (
+    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+      <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${cfg.cls}`}>
+        {cfg.icon} {cfg.label}
+      </span>
+      {isRec ? (
+        <span className="text-[10px] text-green-500/80">&#10003; Empfohlene Konfiguration</span>
+      ) : rec ? (
+        <span className="text-[10px] text-muted-foreground/60">
+          Empfohlen:{" "}
+          <span className="font-mono text-muted-foreground/80">{rec}</span>
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
 const POPULAR_TEXT_MODELS = [
   { name: "qwen2.5:32b" },
   { name: "qwen2.5:14b" },
@@ -481,6 +555,9 @@ export function ModelManager({
             ) : (
               <p className="text-sm text-muted-foreground">{t("downloadFirst")}</p>
             )}
+            {textModel && models.length > 0 && (
+              <ModelRecommendationHint selectedModel={textModel} models={models} task="text" />
+            )}
           </div>
 
           {/* Bildgenerierung */}
@@ -513,6 +590,9 @@ export function ModelManager({
                     ))}
                   </SelectContent>
                 </Select>
+                {imageModel && models.length > 0 && (
+                  <ModelRecommendationHint selectedModel={imageModel} models={models} task="vision" />
+                )}
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">{t("imageGenBackend")}</label>
@@ -587,6 +667,9 @@ export function ModelManager({
               </Select>
             ) : (
               <p className="text-sm text-muted-foreground">{t("downloadFirst")}</p>
+            )}
+            {analysisModel && models.length > 0 && (
+              <ModelRecommendationHint selectedModel={analysisModel} models={models} task="analysis" />
             )}
           </div>
 

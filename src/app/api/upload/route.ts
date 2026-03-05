@@ -57,14 +57,13 @@ function getMaxFileSize(type: string): number {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const t = await getTranslations("media");
-
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const t = await getTranslations("media");
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
@@ -114,7 +113,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json(
-      { error: t("uploadError") },
+      { error: "Upload failed" },
       { status: 500 }
     );
   }
