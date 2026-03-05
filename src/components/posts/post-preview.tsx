@@ -66,9 +66,9 @@ function FacebookPreview({
           </div>
 
           {/* Content */}
-          <div className="px-3 pb-2">
+          <div className="px-3 pb-2 max-h-80 overflow-y-auto">
             <p className="text-sm whitespace-pre-wrap leading-relaxed">
-              {content.length > 500 ? content.slice(0, 500) + "..." : content}
+              {content}
             </p>
           </div>
 
@@ -158,9 +158,9 @@ function LinkedInPreview({
           </div>
 
           {/* Content */}
-          <div className="px-3 pb-2">
+          <div className="px-3 pb-2 max-h-80 overflow-y-auto">
             <p className="text-sm whitespace-pre-wrap leading-relaxed">
-              {content.length > 500 ? content.slice(0, 500) + "..." : content}
+              {content}
             </p>
           </div>
 
