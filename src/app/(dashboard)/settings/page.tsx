@@ -37,6 +37,10 @@ export default async function SettingsPage() {
   const locale = await getLocale();
   const envStatus = checkEnvCredentials();
   const allPlatformsConfigured = envStatus.facebook && envStatus.twitter && envStatus.linkedin;
+
+  // ADMIN guard: ADMIN_EMAILS env var (comma-separated). Falls leer → alle sind Admin (Einzelbetrieb).
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+  const isAdmin = adminEmails.length === 0 || adminEmails.includes(session.user.email ?? "");
   const configuredCount = Object.values(envStatus).filter(Boolean).length;
   const totalCount = Object.keys(envStatus).length;
 
@@ -171,8 +175,8 @@ export default async function SettingsPage() {
             ))}
           </div>
 
-          {/* If NOT all configured: show the form for manual setup */}
-          {!allPlatformsConfigured && (
+          {/* If NOT all configured: show form for manual setup (ADMIN only) */}
+          {!allPlatformsConfigured && isAdmin && (
             <div className="pt-2">
               <div className="flex items-center gap-2 mb-3 p-2 rounded-lg" style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.15)" }}>
                 <Key className="h-4 w-4 shrink-0" style={{ color: "#fbbf24" }} />
@@ -201,8 +205,8 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* ── API How-To Guide ── */}
-      <Card style={{ background: "#0d1424", border: "1px solid rgba(34, 211, 238, 0.15)" }}>
+      {/* ── API How-To Guide (ADMIN only) ── */}
+      {isAdmin && <Card style={{ background: "#0d1424", border: "1px solid rgba(34, 211, 238, 0.15)" }}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
             <Terminal className="h-5 w-5" style={{ color: "#22d3ee" }} />
@@ -321,7 +325,7 @@ export default async function SettingsPage() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       <BrandStyleForm
         initialData={
