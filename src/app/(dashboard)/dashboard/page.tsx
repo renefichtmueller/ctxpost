@@ -22,6 +22,7 @@ import { getTranslations, getLocale } from "next-intl/server";
 import { TrendsWidget } from "@/components/dashboard/trends-widget";
 import { CalendarMiniWidget } from "@/components/dashboard/calendar-mini-widget";
 import { QuickComposerCard } from "@/components/dashboard/quick-composer-card";
+import { LiveClock } from "@/components/dashboard/live-clock";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -42,6 +43,7 @@ export default async function DashboardPage() {
     failedPosts,
     upcoming,
     socialAccounts,
+    userProfile,
   ] = await Promise.all([
     prisma.post.count({ where: { userId: session.user.id } }),
     prisma.post.count({ where: { userId: session.user.id, status: "SCHEDULED" } }),
@@ -56,6 +58,10 @@ export default async function DashboardPage() {
     prisma.socialAccount.findMany({
       where: { userId: session.user.id, isActive: true },
       select: { id: true, platform: true, accountName: true, accountType: true, avatarUrl: true, followerCount: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { timezone: true },
     }),
   ]);
 
@@ -72,8 +78,8 @@ export default async function DashboardPage() {
     <div className="space-y-5">
 
       {/* Header — slim */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <div className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "#34d399" }} />
             <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: "#94a3b8" }}>ONLINE</span>
@@ -82,17 +88,23 @@ export default async function DashboardPage() {
             {t("welcome")}, <span style={{ color: "#a855f7" }}>{session.user.name?.split(" ")[0] || "Hi"}</span> 👋
           </h1>
         </div>
-        <Link href="/ai-insights">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1.5 text-xs"
-            style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.2)", color: "#c084fc" }}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            {tNav("aiInsights")}
-          </Button>
-        </Link>
+
+        <div className="flex items-center gap-4 shrink-0">
+          {/* Live System Clock */}
+          <LiveClock timezone={userProfile?.timezone ?? "Europe/Berlin"} />
+
+          <Link href="/ai-insights">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs"
+              style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.2)", color: "#c084fc" }}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              {tNav("aiInsights")}
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* ── QUICK COMPOSER (Hero) ── */}
