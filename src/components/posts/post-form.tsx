@@ -107,6 +107,26 @@ export function PostForm({ socialAccounts, categories, initialContent, post }: P
 
   const handleSubmit = async (formData: FormData) => {
     setError(null);
+
+    // Block submit if content exceeds any selected platform's character limit
+    const overLimit = selectedPlatforms
+      .filter((p) => PLATFORM_LIMITS[p] && content.length > PLATFORM_LIMITS[p].limit)
+      .map((p) => `${PLATFORM_LIMITS[p].name} (max. ${PLATFORM_LIMITS[p].limit.toLocaleString()} Zeichen)`);
+    if (overLimit.length > 0) {
+      setError(`Text zu lang für: ${overLimit.join(", ")}. Bitte kürzen.`);
+      return;
+    }
+
+    // Fix timezone: datetime-local gives "YYYY-MM-DDTHH:MM" in user's local time.
+    // Convert to UTC ISO string so the server stores the correct moment.
+    const scheduledAtRaw = formData.get("scheduledAt") as string | null;
+    if (scheduledAtRaw) {
+      const localDate = new Date(scheduledAtRaw); // Browser parses as local time
+      if (!isNaN(localDate.getTime())) {
+        formData.set("scheduledAt", localDate.toISOString());
+      }
+    }
+
     let result;
     if (isEditing) {
       result = await updatePost(post.id, formData);
@@ -154,8 +174,13 @@ export function PostForm({ socialAccounts, categories, initialContent, post }: P
     );
   }
 
+  // Show scheduledAt in local time for the datetime-local input
   const defaultScheduledAt = post?.scheduledAt
-    ? new Date(post.scheduledAt).toISOString().slice(0, 16)
+    ? (() => {
+        const d = new Date(post.scheduledAt);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      })()
     : "";
 
   const platformWarnings = selectedPlatforms
@@ -764,6 +789,10 @@ export function PostForm({ socialAccounts, categories, initialContent, post }: P
               })}
             </div>
           </div>
+
+          {/* Hidden fields — always included in FormData regardless of UI state */}
+          {imageUrl && <input type="hidden" name="imageUrl" value={imageUrl} />}
+          {imageDescription && <input type="hidden" name="imageDescription" value={imageDescription} />}
 
           {/* SUBMIT */}
           <div className="flex flex-col gap-2">

@@ -245,7 +245,7 @@ export async function publishToLinkedIn(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const postBody: Record<string, any> = {
     author,
-    commentary: content,
+    commentary: content.length > 3000 ? content.slice(0, 2997) + "..." : content,
     visibility: "PUBLIC",
     distribution: {
       feedDistribution: "MAIN_FEED",
