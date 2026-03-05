@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
+import { ollamaAuthHeaders } from "@/lib/ai/ollama-client";
 
 export const maxDuration = 600;
 
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
       try {
         const response = await fetch(`${ollamaUrl}/api/pull`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...ollamaAuthHeaders() },
           body: JSON.stringify({ name: modelName, stream: true }),
         });
 

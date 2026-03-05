@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
+import { ollamaAuthHeaders } from "@/lib/ai/ollama-client";
 
 export async function DELETE(request: NextRequest) {
   const session = await auth();
@@ -49,7 +50,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const response = await fetch(`${ollamaUrl}/api/delete`, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...ollamaAuthHeaders() },
       body: JSON.stringify({ name: modelName }),
     });
 

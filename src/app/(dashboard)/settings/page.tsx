@@ -123,7 +123,7 @@ export default async function SettingsPage() {
         currentTextModel={user?.textModel ?? "qwen2.5:32b"}
         currentImageModel={user?.imageModel ?? ""}
         currentAnalysisModel={user?.analysisModel ?? "qwen2.5:32b"}
-        currentOllamaUrl={user?.ollamaUrl ?? process.env.OLLAMA_BASE_URL || "http://localhost:11434"}
+        currentOllamaUrl={(user?.ollamaUrl ?? process.env.OLLAMA_BASE_URL) || "http://localhost:11434"}
         currentImageGenUrl={user?.imageGenUrl ?? ""}
         currentImageGenProvider={user?.imageGenProvider ?? "sd-webui"}
       />

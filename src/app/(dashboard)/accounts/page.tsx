@@ -11,6 +11,7 @@ import {
 import type { Platform } from "@prisma/client";
 import { getTranslations } from "next-intl/server";
 import { TestPublishButton } from "@/components/accounts/test-publish-button";
+import { RefreshFacebookPagesButton } from "@/components/accounts/refresh-facebook-pages-button";
 
 type PlatformKey = "FACEBOOK" | "LINKEDIN" | "TWITTER" | "INSTAGRAM" | "THREADS";
 
@@ -287,7 +288,7 @@ export default async function AccountsPage() {
               )}
 
               {/* Connect button */}
-              <div className="p-4 pt-2">
+              <div className="p-4 pt-2 space-y-2">
                 {meta.hint && (
                   <p className="text-xs mb-2" style={{ color: "#6b7280" }}>💡 {meta.hint}</p>
                 )}
@@ -309,6 +310,10 @@ export default async function AccountsPage() {
                     {hasConnected ? `Weiteres ${meta.name}-Konto verbinden` : `${meta.name} verbinden`}
                   </Button>
                 </a>
+                {/* Refresh Pages — only for Facebook when already connected */}
+                {platformKey === "FACEBOOK" && hasConnected && (
+                  <RefreshFacebookPagesButton />
+                )}
               </div>
             </div>
           );

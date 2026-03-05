@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAnthropicCredentials } from "@/lib/api-credentials";
 import { withAuthAndRateLimit } from "@/lib/api-utils";
+import { ollamaAuthHeaders } from "@/lib/ai/ollama-client";
 
 export async function POST(request: NextRequest) {
   const authResult = await withAuthAndRateLimit(request);
@@ -38,7 +39,7 @@ Respond with ONLY the JSON object, no markdown.`;
     if (user.aiProvider === "ollama") {
       const res = await fetch(`${user.ollamaUrl}/api/generate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...ollamaAuthHeaders() },
         body: JSON.stringify({
           model: user.textModel,
           prompt,

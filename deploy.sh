@@ -1,104 +1,58 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════
-# Social Scheduler - Deployment Script
-# Run this on the Mac Studio server
+# CtxPost — Deploy Script (Mac → Server .82)
 # ═══════════════════════════════════════════════════
-
 set -e
 
-PROJECT_DIR="/Users/renefichtmueller/Desktop/Claude Code/social-scheduler"
-export PATH="/opt/homebrew/opt/postgresql@17/bin:/opt/homebrew/bin:$PATH"
+SERVER="root@192.168.178.82"
+REMOTE_DIR="/opt/apps/ctxpost"
+LOCAL_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo "═══════════════════════════════════════════════════"
-echo "  Social Scheduler - Deployment"
+echo "  CtxPost — Deployment"
 echo "═══════════════════════════════════════════════════"
-echo ""
 
-# 1. Ensure PostgreSQL is running
-echo "▸ Checking PostgreSQL..."
-if brew services list | grep -q "postgresql@17.*started"; then
-    echo "  ✓ PostgreSQL is running"
-else
-    echo "  Starting PostgreSQL..."
-    brew services start postgresql@17
-    sleep 2
-fi
+# 1. Build
+echo "▸ Building..."
+cd "$LOCAL_DIR"
+npm run build
 
-# 2. Ensure database exists
-echo "▸ Checking database..."
-if psql -lqt | cut -d \| -f 1 | grep -qw social_scheduler; then
-    echo "  ✓ Database social_scheduler exists"
-else
-    echo "  Creating database..."
-    createdb social_scheduler
-fi
+# 2. Sync .next/standalone/.next (compiled app code)
+echo "▸ Syncing .next to server..."
+rsync -avz --delete \
+  .next/standalone/.next/ \
+  "$SERVER:$REMOTE_DIR/.next/standalone/.next/"
 
-# 3. Install dependencies if needed
-echo "▸ Checking dependencies..."
-cd "$PROJECT_DIR"
-if [ ! -d "node_modules" ]; then
-    echo "  Installing dependencies..."
-    npm install
-fi
+# 3. Sync public assets (non-destructive to preserve uploads)
+echo "▸ Syncing public assets..."
+rsync -avz --exclude='uploads/' \
+  public/ \
+  "$SERVER:$REMOTE_DIR/.next/standalone/public/"
 
-# 4. Generate Prisma client & sync schema
-echo "▸ Syncing database schema..."
-npx prisma generate
-npx prisma db push --skip-generate
+# 4. Fix Prisma: copy correct index.js (with both platform targets) to root node_modules
+echo "▸ Fixing Prisma platform targets..."
+ssh "$SERVER" "
+  cp $REMOTE_DIR/.next/standalone/node_modules/.prisma/client/index.js \
+     $REMOTE_DIR/node_modules/.prisma/client/index.js
+  echo '  ✓ Prisma index.js updated'
+"
 
-# 5. Build Next.js
-echo "▸ Building application..."
-NODE_ENV=production npx next build
+# 5. Restart PM2
+echo "▸ Restarting ctxpost..."
+ssh "$SERVER" "pm2 restart ctxpost --update-env"
 
-# 6. Copy static assets to standalone
-echo "▸ Preparing standalone..."
-cp -r .next/static .next/standalone/.next/static
-# Use cp -r public/. (trailing dot) to merge contents into standalone/public/
-# without creating a nested public/public/ directory
-# This preserves runtime-generated files (uploaded images, etc.)
-cp -r public/. .next/standalone/public/
-
-# 7. Restart PM2
-echo "▸ Restarting application..."
-if pm2 list | grep -q "social-scheduler"; then
-    pm2 restart social-scheduler
-else
-    pm2 start ecosystem.config.cjs
-fi
-pm2 save
-
-# 8. Check nginx
-echo "▸ Checking nginx..."
-if brew services list | grep -q "nginx.*started"; then
-    nginx -t && nginx -s reload
-    echo "  ✓ Nginx reloaded"
-else
-    brew services start nginx
-    echo "  ✓ Nginx started"
-fi
-
-# 9. Health check
-echo ""
+# 6. Health check
 echo "▸ Health check..."
-sleep 2
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
+sleep 4
+HTTP_CODE=$(ssh "$SERVER" "curl -s -o /dev/null -w '%{http_code}' http://localhost:3002")
 if [ "$HTTP_CODE" = "200" ]; then
-    echo "  ✓ App is responding (HTTP $HTTP_CODE)"
+  echo "  ✓ App läuft (HTTP $HTTP_CODE)"
 else
-    echo "  ✗ App returned HTTP $HTTP_CODE"
-    echo "  Check logs: pm2 logs social-scheduler"
+  echo "  ✗ App antwortet mit HTTP $HTTP_CODE"
+  echo "  Logs: ssh $SERVER 'pm2 logs ctxpost --lines 20 --nostream'"
 fi
 
 echo ""
 echo "═══════════════════════════════════════════════════"
-echo "  Deployment complete!"
-echo "  Local:  http://localhost:3000"
-echo "  Nginx:  http://localhost:8080"
-echo ""
-echo "  To setup Cloudflare Tunnel:"
-echo "  1. cloudflared tunnel login"
-echo "  2. cloudflared tunnel create social-scheduler"
-echo "  3. cloudflared tunnel route dns social-scheduler scheduler.fichtmueller.org"
-echo "  4. Copy tunnel ID and run:"
-echo "     cloudflared tunnel --url http://localhost:8080 run social-scheduler"
+echo "  Deploy fertig! https://ctxpost.context-x.org"
 echo "═══════════════════════════════════════════════════"

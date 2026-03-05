@@ -23,7 +23,7 @@ export function getInstagramAuthUrl(creds?: InstagramCredentials): { url: string
     client_id: appId,
     redirect_uri: redirectUri,
     scope:
-      "instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement",
+      "pages_show_list,pages_read_engagement,pages_manage_posts,instagram_manage_insights",
     response_type: "code",
     state,
   });

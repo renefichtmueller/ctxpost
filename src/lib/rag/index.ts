@@ -6,6 +6,7 @@
  *
  * Documents: brand guidelines, successful posts, best practices
  */
+import { ollamaAuthHeaders } from "@/lib/ai/ollama-client";
 
 export interface RAGDocument {
   id: string;
@@ -112,7 +113,7 @@ export async function generateEmbedding(
   try {
     const response = await fetch(`${ollamaUrl}/api/embed`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...ollamaAuthHeaders() },
       body: JSON.stringify({
         model: "nomic-embed-text",
         input: text,
