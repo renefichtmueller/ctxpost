@@ -46,7 +46,7 @@ echo "▸ Schritt 3: Tunnel konfigurieren"
 mkdir -p ~/.cloudflared
 cat > ~/.cloudflared/config.yml << EOF
 tunnel: $TUNNEL_ID
-credentials-file: /Users/renefichtmueller/.cloudflared/$TUNNEL_ID.json
+credentials-file: $HOME/.cloudflared/$TUNNEL_ID.json
 
 ingress:
   - hostname: $DOMAIN

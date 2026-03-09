@@ -1,10 +1,11 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════
-# CtxPost — Deploy Script (Mac → Server .82)
+# CtxPost — Deploy Script (Mac → Server)
 # ═══════════════════════════════════════════════════
 set -e
 
-SERVER="root@192.168.178.82"
+# Set DEPLOY_SERVER env var to override, e.g.: export DEPLOY_SERVER=root@your-server-ip
+SERVER="${DEPLOY_SERVER:-root@your-server-ip}"
 REMOTE_DIR="/opt/apps/ctxpost"
 LOCAL_DIR="$(cd "$(dirname "$0")" && pwd)"
 

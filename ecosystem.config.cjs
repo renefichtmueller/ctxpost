@@ -1,9 +1,14 @@
+const path = require("path");
+
+// Auto-detect install directory (where this config file lives)
+const PROJECT_DIR = __dirname;
+
 module.exports = {
   apps: [
     {
       name: "social-scheduler",
       script: ".next/standalone/server.js",
-      cwd: "/Users/renefichtmueller/Desktop/Claude Code/social-scheduler",
+      cwd: PROJECT_DIR,
       env: {
         NODE_ENV: "production",
         PORT: 3000,
@@ -14,8 +19,8 @@ module.exports = {
       watch: false,
       max_memory_restart: "1G",
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",
-      error_file: "/Users/renefichtmueller/Desktop/Claude Code/social-scheduler/logs/pm2-error.log",
-      out_file: "/Users/renefichtmueller/Desktop/Claude Code/social-scheduler/logs/pm2-out.log",
+      error_file: path.join(PROJECT_DIR, "logs/pm2-error.log"),
+      out_file: path.join(PROJECT_DIR, "logs/pm2-out.log"),
       merge_logs: true,
     },
   ],
