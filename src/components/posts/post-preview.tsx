@@ -12,7 +12,6 @@ import {
   MoreHorizontal,
   Heart,
 } from "lucide-react";
-import Image from "next/image";
 
 interface PostPreviewProps {
   content: string;
@@ -74,13 +73,11 @@ function FacebookPreview({
 
           {/* Image */}
           {imageUrl && (
-            <div className="relative w-full aspect-video bg-muted">
-              <Image
+            <div className="w-full aspect-video bg-muted">
+              <img
                 src={imageUrl}
                 alt={t("title")}
-                fill
-                className="object-cover"
-                unoptimized
+                className="w-full h-full object-cover"
               />
             </div>
           )}
@@ -166,13 +163,11 @@ function LinkedInPreview({
 
           {/* Image */}
           {imageUrl && (
-            <div className="relative w-full aspect-video bg-muted">
-              <Image
+            <div className="w-full aspect-video bg-muted">
+              <img
                 src={imageUrl}
                 alt={t("title")}
-                fill
-                className="object-cover"
-                unoptimized
+                className="w-full h-full object-cover"
               />
             </div>
           )}

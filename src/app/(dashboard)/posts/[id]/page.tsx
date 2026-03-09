@@ -18,7 +18,6 @@ import type { PostStatus, Platform } from "@prisma/client";
 import { deletePost, retryPost } from "@/actions/posts";
 import Link from "next/link";
 import { ArrowLeft, Pencil, Trash2, RefreshCw, ImageIcon } from "lucide-react";
-import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 
 export default async function PostDetailPage({
@@ -105,13 +104,11 @@ export default async function PostDetailPage({
                   <ImageIcon className="h-4 w-4" />
                   {t("image")}
                 </div>
-                <div className="relative w-full max-w-md aspect-video rounded-lg overflow-hidden border bg-muted">
-                  <Image
+                <div className="w-full max-w-md aspect-video rounded-lg overflow-hidden border bg-muted flex items-center justify-center">
+                  <img
                     src={post.imageUrl}
                     alt={t("postImage")}
-                    fill
-                    className="object-contain"
-                    unoptimized
+                    className="w-full h-full object-contain"
                   />
                 </div>
               </div>
@@ -130,12 +127,10 @@ export default async function PostDetailPage({
                           PDF
                         </div>
                       ) : (
-                        <Image
+                        <img
                           src={url}
                           alt={`Media ${i + 1}`}
-                          fill
-                          className="object-cover"
-                          unoptimized
+                          className="w-full h-full object-cover"
                         />
                       )}
                     </div>

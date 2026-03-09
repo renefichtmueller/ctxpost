@@ -22,10 +22,15 @@ interface OllamaTagsResponse {
   models: OllamaModel[];
 }
 
-/** Returns the Ollama API key headers if OLLAMA_API_KEY is configured */
 export function ollamaAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {};
   const key = process.env.OLLAMA_API_KEY;
-  return key ? { "x-ollama-key": key } : {};
+  if (key) headers["x-ollama-key"] = key;
+  return headers;
+}
+
+function ollamaHeaders(extra?: Record<string, string>): Record<string, string> {
+  return { "Content-Type": "application/json", ...ollamaAuthHeaders(), ...extra };
 }
 
 export async function askOllama(
@@ -36,7 +41,7 @@ export async function askOllama(
 ): Promise<string> {
   const response = await fetch(`${ollamaUrl}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...ollamaAuthHeaders() },
+    headers: ollamaHeaders(),
     body: JSON.stringify({
       model,
       messages: [
@@ -74,7 +79,7 @@ export async function askOllamaStreaming(
 ): Promise<string> {
   const response = await fetch(`${ollamaUrl}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...ollamaAuthHeaders() },
+    headers: ollamaHeaders(),
     body: JSON.stringify({
       model,
       messages: [
@@ -132,9 +137,10 @@ export async function listOllamaModels(
   ollamaUrl: string
 ): Promise<OllamaModel[]> {
   try {
+    const key = process.env.OLLAMA_API_KEY;
     const response = await fetch(`${ollamaUrl}/api/tags`, {
       method: "GET",
-      headers: { ...ollamaAuthHeaders() },
+      headers: key ? { "x-ollama-key": key } : {},
       signal: AbortSignal.timeout(5000),
     });
 

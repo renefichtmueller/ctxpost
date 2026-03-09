@@ -41,7 +41,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://*.fbcdn.net https://*.cdninstagram.com https://*.licdn.com https://pbs.twimg.com https://*.twimg.com https://lh3.googleusercontent.com",
+              "img-src 'self' data: blob: https://*.fbcdn.net https://*.cdninstagram.com https://*.licdn.com https://pbs.twimg.com https://*.twimg.com https://lh3.googleusercontent.com https://ctxmeet.context-x.org",
               "font-src 'self'",
               "connect-src 'self' https://graph.facebook.com https://api.linkedin.com https://api.twitter.com https://graph.threads.net https://graph.instagram.com",
               "frame-ancestors 'none'",
@@ -76,6 +76,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "pbs.twimg.com" },
       { protocol: "https", hostname: "**.twimg.com" },
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      // CtxEvent screenshots (post images)
+      { protocol: "https", hostname: "ctxmeet.context-x.org" },
     ],
   },
 };

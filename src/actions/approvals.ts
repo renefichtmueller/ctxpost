@@ -113,11 +113,11 @@ export async function getPendingReviews() {
   if (userTeams.length === 0) return [];
 
   const teamMemberIds = await prisma.teamMember.findMany({
-    where: { teamId: { in: userTeams.map((t) => t.teamId) } },
+    where: { teamId: { in: userTeams.map((t: { teamId: string }) => t.teamId) } },
     select: { userId: true },
   });
 
-  const memberUserIds = [...new Set(teamMemberIds.map((m) => m.userId))].filter(
+  const memberUserIds = [...new Set(teamMemberIds.map((m: { userId: string }) => m.userId))].filter(
     (id) => id !== userId
   );
 
